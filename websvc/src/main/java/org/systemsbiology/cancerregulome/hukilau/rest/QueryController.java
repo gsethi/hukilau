@@ -38,8 +38,11 @@ public class QueryController  {
     protected ModelAndView handleGraphRetrieval(HttpServletRequest request, @PathVariable("nodeId") String nodeId ) throws Exception {
         String requestUri = request.getRequestURI();
         log.info(requestUri);
-        int traversalLevel= Integer.parseInt(request.getParameter("level"));
-        traversalLevel = traversalLevel == 0 ? 1 : traversalLevel;  //if not specified, go one level
+        int traversalLevel = 1; //default to 1
+        if(request.getParameter("level") != null){
+           traversalLevel= Integer.parseInt(request.getParameter("level"));
+        }
+
 
         Map<Long,Node> nodeMap = new HashMap<Long, Node>();
         Map<Long,Relationship> relMap = new HashMap<Long, Relationship>();
@@ -53,6 +56,7 @@ public class QueryController  {
         //retrieve all nodes and relationships
         retrieveNodesAndEdges(traversalLevel, nodeMap, relMap, searchNode);
 
+        log.info("number of nodes: " + nodeMap.values().size() + " number of rel: " + relMap.values().size());
          //now create node and edge JSON from the maps
          //need to keep track of node and edge properties for schema
         Map<String,String> nodePropMap = new HashMap<String, String>();
@@ -98,12 +102,12 @@ public class QueryController  {
                 nodeMap.put(pNode.getId(),pNode);
 
                 //getting both outbound and inbound relationships to the node
-                for(Relationship rel: searchNode.getRelationships()){
+                for(Relationship rel: pNode.getRelationships()){
                     //put relationship in map for edges
                     relMap.put(rel.getId(),rel);
                     //put other node of relationship in list to be processed if it hasn't been processed already
-                    if(!nodeMap.containsKey(rel.getOtherNode(searchNode).getId())){
-                        unProcessedNodes.add(rel.getOtherNode(searchNode));
+                    if(!nodeMap.containsKey(rel.getOtherNode(pNode).getId())){
+                        unProcessedNodes.add(rel.getOtherNode(pNode));
                     }
                 }
             }
@@ -120,6 +124,10 @@ public class QueryController  {
     private void createEdgeJSON(Map<Long, Relationship> relMap, Map<String, String> relPropMap, JSONArray edgeJSONArray) throws JSONException {
         for(Relationship r : relMap.values()){
             JSONObject edgeJSON = new JSONObject();
+            edgeJSON.put("id",r.getId());
+            edgeJSON.put("source",r.getStartNode().getId());
+            edgeJSON.put("target",r.getEndNode().getId());
+
             for(String propKey : r.getPropertyKeys()){
                 edgeJSON.put(propKey,r.getProperty(propKey));
                 relPropMap.put(propKey,propKey);
@@ -132,6 +140,7 @@ public class QueryController  {
     private void createNodeJSON(Map<Long, Node> nodeMap, Map<String, String> nodePropMap, JSONArray nodeJSONArray) throws JSONException {
         for(Node n : nodeMap.values()){
             JSONObject nodeJSON = new JSONObject();
+            nodeJSON.put("id",n.getId());
             for(String propKey : n.getPropertyKeys()){
                 nodeJSON.put(propKey,n.getProperty(propKey));
                 nodePropMap.put(propKey,propKey);
@@ -144,7 +153,8 @@ public class QueryController  {
     private void createSchemaJSON(Map<String, String> nodePropMap, JSONArray npJSONArray) throws JSONException {
         for(String nProp : nodePropMap.values()){
             JSONObject nodePropJSON = new JSONObject();
-            nodePropJSON.put(nProp,"String");
+            nodePropJSON.put("name",nProp);
+            nodePropJSON.put("type","string");
             npJSONArray.put(nodePropJSON);
         }
     }

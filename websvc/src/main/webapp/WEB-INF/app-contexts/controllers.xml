@@ -4,7 +4,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
     <bean id="graphDB" class="org.neo4j.kernel.EmbeddedGraphDatabase" destroy-method="shutdown" lazy-init="false">
-        <constructor-arg type="java.lang.String" value="/proj/pubcrawl.db"/>
+        <constructor-arg type="java.lang.String" value="/proj/pngisb/databases/haircycling.20111213.db"/>
     </bean>
 
     <bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
