@@ -1,5 +1,6 @@
 package org.systemsbiology.cancerregulome.hukilau.rest;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
+import org.systemsbiology.addama.commons.web.views.JsonItemsView;
 import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,8 +36,56 @@ public class QueryController {
     private EmbeddedGraphDatabase graphDB;
     private WrappingNeoServerBootstrapper neoServer;
 
+    /*
+     * TODO : Move this off to separate class that handles connection to EmbeddedGraphDatabase
+     */
+    public void cleanUp() {
+        this.neoServer.stop();
+        this.graphDB.shutdown();
+    }
+
+    public void setGraphDB(EmbeddedGraphDatabase graphDB) {
+        this.graphDB = graphDB;
+        EmbeddedServerConfigurator config = new EmbeddedServerConfigurator(graphDB);
+        //TODO: Could put this in a config file....
+        config.configuration().setProperty(Configurator.WEBSERVER_PORT_PROPERTY_KEY, 7474);
+        config.configuration().setProperty(Configurator.WEBSERVER_ADDRESS_PROPERTY_KEY, "0.0.0.0");
+        this.neoServer = new WrappingNeoServerBootstrapper(graphDB, config);
+        neoServer.start();
+
+    }
+
+    /*
+     * Controller Methods
+     */
+    @RequestMapping(value = "/graphs", method = RequestMethod.GET)
+    protected ModelAndView listNetworks() throws Exception {
+        JSONObject json = new JSONObject();
+        // TODO: Add list of networks
+        return new ModelAndView(new JsonItemsView()).addObject("json", json);
+    }
+
+    @RequestMapping(value = "/graphs/{networkId}", method = RequestMethod.GET)
+    protected ModelAndView listNetwork(HttpServletRequest request, @PathVariable("networkId") String networkId) throws Exception {
+        log.info("networkId=" + networkId);
+        log.info("request=" + request.getParameterMap());
+
+        // TODO : Lookup nodes based on search criteria
+
+        JSONObject data = new JSONObject();
+        data.put("nodes", new JSONArray());
+        data.put("edges", new JSONArray());
+
+        JSONObject dataSchema = new JSONObject();
+        dataSchema.put("nodes", new JSONArray());
+        dataSchema.put("edges", new JSONArray());
+
+        return new ModelAndView(new JsonNetworkView()).addObject("data", data).addObject("dataSchema", dataSchema);
+    }
+
     @RequestMapping(value = "/graph/{nodeId}", method = RequestMethod.GET)
     protected ModelAndView handleGraphRetrieval(HttpServletRequest request, @PathVariable("nodeId") String nodeId) throws Exception {
+        // TODO : Lookup network first, then node in network
         String requestUri = request.getRequestURI();
         log.info(requestUri);
         int traversalLevel = 1; //default to 1
@@ -72,6 +122,9 @@ public class QueryController {
         return new ModelAndView(new JsonNetworkView()).addObject("data", data).addObject("dataSchema", dataSchema);
     }
 
+    /*
+     * Private Methods
+     */
     private void retrieveNodesAndEdges(int traversalLevel, Map<Long, Node> nodeMap, Map<Long, Relationship> relMap, Node searchNode) {
         List<Node> unProcessedNodes = new ArrayList<Node>();
         List<Node> inProcessNodes = new ArrayList<Node>();
@@ -102,19 +155,4 @@ public class QueryController {
         }
     }
 
-    public void cleanUp() {
-        this.neoServer.stop();
-        this.graphDB.shutdown();
-    }
-
-    public void setGraphDB(EmbeddedGraphDatabase graphDB) {
-        this.graphDB = graphDB;
-        EmbeddedServerConfigurator config = new EmbeddedServerConfigurator(graphDB);
-        //TODO: Could put this in a config file....
-        config.configuration().setProperty(Configurator.WEBSERVER_PORT_PROPERTY_KEY, 7474);
-        config.configuration().setProperty(Configurator.WEBSERVER_ADDRESS_PROPERTY_KEY, "0.0.0.0");
-        this.neoServer = new WrappingNeoServerBootstrapper(graphDB, config);
-        neoServer.start();
-
-    }
 }
