@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * @author hrovira
- * @todo: need to load into db different datatypes for properties and then retrieve them here appropriately
+ * TODO: need to load into db different datatypes for properties and then retrieve them here appropriately
  */
 public class NodeMaps {
     private final Map<Long, Node> nodesById = new HashMap<Long, Node>();
