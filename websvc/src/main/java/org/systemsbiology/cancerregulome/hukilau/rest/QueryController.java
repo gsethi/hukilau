@@ -31,30 +31,14 @@ import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.travers
 public class QueryController {
     private static final Logger log = Logger.getLogger(QueryController.class.getName());
     private EmbeddedGraphDatabase graphDB;
-    private WrappingNeoServerBootstrapper neoServer;
-
-    /*
-     * TODO : Move this off to separate class that handles connection to EmbeddedGraphDatabase
-     */
-    public void cleanUp() {
-        this.neoServer.stop();
-        this.graphDB.shutdown();
-    }
 
     public void setGraphDB(EmbeddedGraphDatabase graphDB) {
         this.graphDB = graphDB;
-        EmbeddedServerConfigurator config = new EmbeddedServerConfigurator(graphDB);
-        //TODO: Could put this in a config file....
-        config.configuration().setProperty(Configurator.WEBSERVER_PORT_PROPERTY_KEY, 7474);
-        config.configuration().setProperty(Configurator.WEBSERVER_ADDRESS_PROPERTY_KEY, "0.0.0.0");
-        this.neoServer = new WrappingNeoServerBootstrapper(graphDB, config);
-        neoServer.start();
-
     }
 
     /*
-     * Controller Methods
-     */
+    * Controller Methods
+    */
     @RequestMapping(value = "/graphs", method = RequestMethod.GET)
     protected ModelAndView listNetworks() throws Exception {
         JSONObject json = new JSONObject();
@@ -91,7 +75,7 @@ public class QueryController {
             traversalLevel = Integer.parseInt(request.getParameter("level"));
         }
 
-        IndexManager indexMgr = graphDB.index();
+        IndexManager indexMgr = this.graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
 
