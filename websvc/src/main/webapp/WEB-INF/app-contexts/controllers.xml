@@ -11,15 +11,13 @@
         <property name="alwaysUseFullPath" value="true"/>
         <property name="urlMap">
             <map>
-                <!-- WARNING: Mappings are sensitive to order in which they are placed in this list -->
                 <entry key="/**">
-                    <bean class="org.systemsbiology.cancerregulome.hukilau.rest.QueryController" autowire="byType" destroy-method="cleanUp">
-                          <property name="graphDB" ref="graphDB"/>
-                    </bean>
+                    <bean class="org.systemsbiology.cancerregulome.hukilau.rest.QueryController" autowire="byType"/>
                 </entry>
             </map>
         </property>
     </bean>
 
+    <bean class="org.systemsbiology.cancerregulome.hukilau.utils.EmbeddedNeo4j" autowire="byType"/>
 
 </beans>
