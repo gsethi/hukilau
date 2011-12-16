@@ -5,21 +5,21 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
 
 import java.util.Map;
 
 /**
  * @author hrovira
  */
-public class NetworkJsonUtils {
-    public static JSONArray createNodeJSON(Map<Long, Node> nodeMap, Map<String, String> nodePropMap) throws JSONException {
+public class JsonUtils {
+    public static JSONArray createNodeJSON(NodeMaps nodeMaps) throws JSONException {
         JSONArray jsonArray = new JSONArray();
-        for (Node n : nodeMap.values()) {
+        for (Node n : nodeMaps.getNodes()) {
             JSONObject json = new JSONObject();
             json.put("id", n.getId());
             for (String propKey : n.getPropertyKeys()) {
                 json.put(propKey, n.getProperty(propKey));
-                nodePropMap.put(propKey, propKey);
             }
 
             jsonArray.put(json);
@@ -27,9 +27,9 @@ public class NetworkJsonUtils {
         return jsonArray;
     }
 
-    public static JSONArray createEdgeJSON(Map<Long, Relationship> relMap, Map<String, String> relPropMap) throws JSONException {
+    public static JSONArray createEdgeJSON(NodeMaps nodeMaps) throws JSONException {
         JSONArray jsonArray = new JSONArray();
-        for (Relationship r : relMap.values()) {
+        for (Relationship r : nodeMaps.getRelationships()) {
             JSONObject json = new JSONObject();
             json.put("id", r.getId());
             json.put("source", r.getStartNode().getId());
@@ -37,7 +37,6 @@ public class NetworkJsonUtils {
 
             for (String propKey : r.getPropertyKeys()) {
                 json.put(propKey, r.getProperty(propKey));
-                relPropMap.put(propKey, propKey);
             }
 
             jsonArray.put(json);
@@ -45,13 +44,12 @@ public class NetworkJsonUtils {
         return jsonArray;
     }
 
-    public static JSONArray createSchemaJSON(Map<String, String> nodePropMap) throws JSONException {
-        //TODO: need to load into db different datatypes for properties and then retrieve them here appropriately
+    public static JSONArray createSchemaJSON(Map<String, String> propertyMap) throws JSONException {
         JSONArray jsonArray = new JSONArray();
-        for (String nProp : nodePropMap.values()) {
+        for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
             JSONObject json = new JSONObject();
-            json.put("name", nProp);
-            json.put("type", "string");
+            json.put("name", entry.getKey());
+            json.put("type", entry.getValue());
             jsonArray.put(json);
         }
         return jsonArray;
