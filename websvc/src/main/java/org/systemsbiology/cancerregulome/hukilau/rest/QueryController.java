@@ -25,7 +25,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import static org.apache.commons.lang.StringUtils.substringAfterLast;
 import static org.apache.commons.lang.StringUtils.substringBeforeLast;
+import static org.apache.commons.lang.StringUtils.substringBetween;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
 import static org.systemsbiology.cancerregulome.hukilau.utils.JsonUtils.*;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
@@ -55,7 +57,7 @@ public class QueryController implements InitializingBean {
     */
     @RequestMapping(value = "/**/graphs", method = RequestMethod.GET)
     protected ModelAndView listNetworks(HttpServletRequest request) throws Exception {
-        String uri = request.getRequestURI();
+        String uri = substringAfterLast(request.getRequestURI(), request.getContextPath());
 
         JSONObject json = new JSONObject();
 
@@ -74,13 +76,15 @@ public class QueryController implements InitializingBean {
     @RequestMapping(value = "/**/graphs/{graphDbId}", method = RequestMethod.GET)
     protected ModelAndView listNetwork(HttpServletRequest request, @PathVariable("graphDbId") String graphDbId) throws Exception {
 //        EmbeddedGraphDatabase graphDB = graphDbsById.get(graphDbId);
+        String uri = substringAfterLast(request.getRequestURI(), request.getContextPath());
+
         log.info("graphDbId=" + graphDbId);
 
         // TODO : Lookup nodes based on search criteria
         log.info("request=" + request.getParameterMap());
 
         JSONObject json = new JSONObject();
-        json.put("uri", request.getRequestURI());
+        json.put("uri", uri);
         json.put("name", graphDbId);
 
         JSONObject data = new JSONObject();
@@ -113,7 +117,7 @@ public class QueryController implements InitializingBean {
         log.info("number of nodes: " + nodeMaps.numberOfNodes());
         log.info("number of relationships: " + nodeMaps.numberOfRelationships());
 
-        String baseUri = substringBeforeLast(request.getRequestURI(), "/nodes");
+        String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/nodes");
 
         JSONObject data = new JSONObject();
         data.put("nodes", createNodeJSON(baseUri, nodeMaps));
