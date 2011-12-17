@@ -17,7 +17,7 @@ public class JsonUtils {
         JSONArray jsonArray = new JSONArray();
         for (Node n : nodeMaps.getNodes()) {
             JSONObject json = new JSONObject();
-            json.put("id", n.getId());
+            json.put("id", baseUri + "/nodes/" + n.getId());
             json.put("uri", baseUri + "/nodes/" + n.getId());
             for (String propKey : n.getPropertyKeys()) {
                 json.put(propKey, n.getProperty(propKey));
@@ -32,10 +32,10 @@ public class JsonUtils {
         JSONArray jsonArray = new JSONArray();
         for (Relationship r : nodeMaps.getRelationships()) {
             JSONObject json = new JSONObject();
-            json.put("id", r.getId());
+            json.put("id", baseUri + "/edges/" + r.getId());
             json.put("uri", baseUri + "/edges/" + r.getId());
-            json.put("source", r.getStartNode().getId());
-            json.put("target", r.getEndNode().getId());
+            json.put("source", baseUri + "/nodes/" + r.getStartNode().getId());
+            json.put("target", baseUri + "/nodes/" + r.getEndNode().getId());
 
             for (String propKey : r.getPropertyKeys()) {
                 json.put(propKey, r.getProperty(propKey));
@@ -46,14 +46,29 @@ public class JsonUtils {
         return jsonArray;
     }
 
-    public static JSONArray createSchemaJSON(Map<String, String> propertyMap) throws JSONException {
+    public static JSONArray nodeSchemaJSON(Map<String, String> propertyMap) throws JSONException {
         JSONArray jsonArray = new JSONArray();
+        appendCommon(propertyMap, jsonArray);
+        return jsonArray;
+    }
+
+    public static JSONArray edgeSchemaJSON(Map<String, String> propertyMap) throws JSONException {
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.put(new JSONObject().put("name", "source").put("type", "string"));
+        jsonArray.put(new JSONObject().put("name", "target").put("type", "string"));
+        appendCommon(propertyMap, jsonArray);
+        return jsonArray;
+    }
+
+    private static void appendCommon(Map<String, String> propertyMap, JSONArray jsonArray) throws JSONException {
+        jsonArray.put(new JSONObject().put("name", "id").put("type", "string"));
+        jsonArray.put(new JSONObject().put("name", "uri").put("type", "string"));
+        jsonArray.put(new JSONObject().put("name", "name").put("type", "string"));
         for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
             JSONObject json = new JSONObject();
             json.put("name", entry.getKey());
             json.put("type", entry.getValue());
             jsonArray.put(json);
         }
-        return jsonArray;
     }
 }
