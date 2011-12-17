@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static org.apache.commons.lang.StringUtils.substringBeforeLast;
+import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
 import static org.systemsbiology.cancerregulome.hukilau.utils.JsonUtils.*;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
 
@@ -100,10 +101,7 @@ public class QueryController implements InitializingBean {
                                                 @PathVariable("graphDbId") String graphDbId,
                                                 @PathVariable("nodeId") String nodeId) throws Exception {
         // TODO : Lookup node by name or by ID?
-        int traversalLevel = 1; //default to 1
-        if (request.getParameter("level") != null) {
-            traversalLevel = Integer.parseInt(request.getParameter("level"));
-        }
+        int traversalLevel = getIntParameter(request, "level", 1);
 
         EmbeddedGraphDatabase graphDB = graphDbsById.get(graphDbId);
         IndexManager indexMgr = graphDB.index();
