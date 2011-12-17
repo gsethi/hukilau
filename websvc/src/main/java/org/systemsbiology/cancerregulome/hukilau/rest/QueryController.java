@@ -6,18 +6,26 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexManager;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 import org.systemsbiology.addama.commons.web.views.JsonItemsView;
+import org.systemsbiology.addama.commons.web.views.JsonView;
+import org.systemsbiology.addama.jsonconfig.JsonConfig;
+import org.systemsbiology.addama.jsonconfig.impls.StringMapJsonConfigHandler;
+import org.systemsbiology.cancerregulome.hukilau.configs.Neo4jGraphJsonConfigHandler;
 import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
 import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
+import static org.apache.commons.lang.StringUtils.substringBeforeLast;
 import static org.systemsbiology.cancerregulome.hukilau.utils.JsonUtils.*;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
 
@@ -25,54 +33,80 @@ import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.travers
  * @author aeakin
  */
 @Controller
-public class QueryController {
+public class QueryController implements InitializingBean {
     private static final Logger log = Logger.getLogger(QueryController.class.getName());
-    private EmbeddedGraphDatabase graphDB;
+    private final Map<String, EmbeddedGraphDatabase> graphDbsById = new HashMap<String, EmbeddedGraphDatabase>();
+    private final Map<String, String> labelsByUri = new HashMap<String, String>();
 
-    public void setGraphDB(EmbeddedGraphDatabase graphDB) {
-        this.graphDB = graphDB;
+    private JsonConfig jsonConfig;
+
+    public void setJsonConfig(JsonConfig jsonConfig) {
+        this.jsonConfig = jsonConfig;
+    }
+
+    public void afterPropertiesSet() throws Exception {
+        this.jsonConfig.visit(new Neo4jGraphJsonConfigHandler(graphDbsById));
+        this.jsonConfig.visit(new StringMapJsonConfigHandler(labelsByUri, "label"));
     }
 
     /*
     * Controller Methods
     */
-    @RequestMapping(value = "/graphs", method = RequestMethod.GET)
-    protected ModelAndView listNetworks() throws Exception {
+    @RequestMapping(value = "/**/graphs", method = RequestMethod.GET)
+    protected ModelAndView listNetworks(HttpServletRequest request) throws Exception {
+        String uri = request.getRequestURI();
+
         JSONObject json = new JSONObject();
-        // TODO: Add list of networks
+
+        for (String id : graphDbsById.keySet()) {
+            JSONObject item = new JSONObject();
+            String graphDbUri = uri + "/" + id;
+            item.put("uri", graphDbUri);
+            item.put("name", id);
+            item.put("label", labelsByUri.get(graphDbUri));
+            json.append("items", item);
+        }
+
         return new ModelAndView(new JsonItemsView()).addObject("json", json);
     }
 
-    @RequestMapping(value = "/graphs/{networkId}", method = RequestMethod.GET)
-    protected ModelAndView listNetwork(HttpServletRequest request, @PathVariable("networkId") String networkId) throws Exception {
-        log.info("networkId=" + networkId);
-        log.info("request=" + request.getParameterMap());
+    @RequestMapping(value = "/**/graphs/{graphDbId}", method = RequestMethod.GET)
+    protected ModelAndView listNetwork(HttpServletRequest request, @PathVariable("graphDbId") String graphDbId) throws Exception {
+//        EmbeddedGraphDatabase graphDB = graphDbsById.get(graphDbId);
+        log.info("graphDbId=" + graphDbId);
 
         // TODO : Lookup nodes based on search criteria
+        log.info("request=" + request.getParameterMap());
+
+        JSONObject json = new JSONObject();
+        json.put("uri", request.getRequestURI());
+        json.put("name", graphDbId);
 
         JSONObject data = new JSONObject();
         data.put("nodes", new JSONArray());
         data.put("edges", new JSONArray());
+        json.put("data", data);
 
         JSONObject dataSchema = new JSONObject();
         dataSchema.put("nodes", new JSONArray());
         dataSchema.put("edges", new JSONArray());
+        json.put("dataSchema", dataSchema);
 
-        return new ModelAndView(new JsonNetworkView()).addObject("data", data).addObject("dataSchema", dataSchema);
+        return new ModelAndView(new JsonView()).addObject("json", json);
     }
 
-    @RequestMapping(value = "/graph/{nodeId}", method = RequestMethod.GET)
-    protected ModelAndView handleGraphRetrieval(HttpServletRequest request, @PathVariable("nodeId") String nodeId) throws Exception {
-        // TODO : Lookup network first, then node in network
-        // TODO : Lookup node by name
-        String requestUri = request.getRequestURI();
-        log.info(requestUri);
+    @RequestMapping(value = "/**/graphs/{graphDbId}/nodes/{nodeId}", method = RequestMethod.GET)
+    protected ModelAndView handleGraphRetrieval(HttpServletRequest request,
+                                                @PathVariable("graphDbId") String graphDbId,
+                                                @PathVariable("nodeId") String nodeId) throws Exception {
+        // TODO : Lookup node by name or by ID?
         int traversalLevel = 1; //default to 1
         if (request.getParameter("level") != null) {
             traversalLevel = Integer.parseInt(request.getParameter("level"));
         }
 
-        IndexManager indexMgr = this.graphDB.index();
+        EmbeddedGraphDatabase graphDB = graphDbsById.get(graphDbId);
+        IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
 
@@ -81,9 +115,11 @@ public class QueryController {
         log.info("number of nodes: " + nodeMaps.numberOfNodes());
         log.info("number of relationships: " + nodeMaps.numberOfRelationships());
 
+        String baseUri = substringBeforeLast(request.getRequestURI(), "/nodes");
+
         JSONObject data = new JSONObject();
-        data.put("nodes", createNodeJSON(nodeMaps));
-        data.put("edges", createEdgeJSON(nodeMaps));
+        data.put("nodes", createNodeJSON(baseUri, nodeMaps));
+        data.put("edges", createEdgeJSON(baseUri, nodeMaps));
 
         JSONObject dataSchema = new JSONObject();
         dataSchema.put("nodes", createSchemaJSON(nodeMaps.getNodeProperties()));
