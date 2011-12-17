@@ -1,0 +1,62 @@
+<html>
+    <head>
+        <title>Graph Databases</title>
+        <link rel="shortcut icon" href="https://informatics-apps.systemsbiology.net/addama/ui/isbfavicon.ico" type="image/x-icon"/>
+
+        <link rel="stylesheet" type="text/css" href="https://informatics-apps.systemsbiology.net/ext-js-3.4.0/resources/css/ext-all.css"/>
+        <link rel="stylesheet" type="text/css" href="https://informatics-apps.systemsbiology.net/ext-js-3.4.0/examples/shared/examples.css"/>
+        <link rel="stylesheet" type="text/css" href="https://informatics-apps.systemsbiology.net/ext-js-3.4.0/resources/css/xtheme-gray.css"/>
+
+        <script type="text/javascript" src="https://informatics-apps.systemsbiology.net/ext-js-3.4.0/adapter/ext/ext-base.js"></script>
+        <script type="text/javascript" src="https://informatics-apps.systemsbiology.net/ext-js-3.4.0/ext-all-debug.js"></script>
+
+        <script type="text/javascript" src="https://addama.googlecode.com/svn/tags/2.1/user-interfaces/src/main/html/addama/ui/console_handling.js"></script>
+        <script type="text/javascript" src="https://addama.googlecode.com/svn/tags/2.1/user-interfaces/src/main/html/addama/ui/query_parameters.js"></script>
+        <script type="text/javascript" src="https://informatics-apps.systemsbiology.net/cytoscapeweb_v0.8/js/min/AC_OETags.min.js"></script>
+        <script type="text/javascript" src="https://informatics-apps.systemsbiology.net/cytoscapeweb_v0.8/js/min/cytoscapeweb.min.js"></script>
+        <script type="text/javascript">
+            function RefreshUI() {
+                Ext.Ajax.request({ method: "POST", url: "/addama/ui/refresh",
+                    success: function() {
+                        document.location = document.location.href;
+                    }
+                });
+            }
+
+            Ext.onReady(function() {
+                Ext.Ajax.request({
+                    method: "get",
+                    url: "/addama/datasources/graphs",
+                    success: function(o) {
+                        Ext.getDom("c_graphs").innerHTML = o.responseText;
+                    }
+                });
+
+                Ext.Ajax.request({
+                    method: "get",
+                    url: "/addama/datasources/graphs/haircycling.20111213/nodes/4?level=2",
+                    success: function(o) {
+                        var json = Ext.util.JSON.decode(o.responseText);
+
+                        var vis = new org.cytoscapeweb.Visualization("c_vis", {
+                            swfPath: "https://informatics-apps.systemsbiology.net/cytoscapeweb_v0.8/swf/CytoscapeWeb",
+                            flashInstallerPath: "https://informatics-apps.systemsbiology.net/cytoscapeweb_v0.8/swf/playerProductInstall"
+                        });
+                        vis.draw({
+                            network: json,
+                            nodeTooltipsEnabled: true,
+                            edgeTooltipsEnabled: true
+                        });
+                    }
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h3>Graph Database Results</h3>
+        <a href="#" onclick="RefreshUI(); return false;">Refresh UI Version</a>
+        <div id="c_graphs"></div>
+        <div id="c_vis"></div>
+    </body>
+</html>
+
