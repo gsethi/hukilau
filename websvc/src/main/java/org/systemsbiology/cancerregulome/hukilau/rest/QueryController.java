@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static org.apache.commons.lang.StringUtils.substringAfterLast;
-import static org.apache.commons.lang.StringUtils.substringBeforeLast;
 import static org.apache.commons.lang.StringUtils.substringBetween;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
 import static org.systemsbiology.cancerregulome.hukilau.utils.JsonUtils.*;
@@ -124,8 +123,8 @@ public class QueryController implements InitializingBean {
         data.put("edges", createEdgeJSON(baseUri, nodeMaps));
 
         JSONObject dataSchema = new JSONObject();
-        dataSchema.put("nodes", createSchemaJSON(nodeMaps.getNodeProperties()));
-        dataSchema.put("edges", createSchemaJSON(nodeMaps.getRelationshipProperties()));
+        dataSchema.put("nodes", nodeSchemaJSON(nodeMaps.getNodeProperties()));
+        dataSchema.put("edges", edgeSchemaJSON(nodeMaps.getRelationshipProperties()));
 
         return new ModelAndView(new JsonNetworkView()).addObject("data", data).addObject("dataSchema", dataSchema);
     }
