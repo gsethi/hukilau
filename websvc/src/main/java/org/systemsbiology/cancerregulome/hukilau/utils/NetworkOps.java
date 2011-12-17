@@ -43,6 +43,7 @@ public class NetworkOps {
             unProcessedNodes = new ArrayList<Node>();
         }
 
+        nodeMaps.tieUpLooseEnds();
         return nodeMaps;
     }
 

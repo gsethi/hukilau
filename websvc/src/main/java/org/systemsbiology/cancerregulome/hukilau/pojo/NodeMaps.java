@@ -67,4 +67,12 @@ public class NodeMaps {
         return this.relationshipsById.values().toArray(new Relationship[relationshipsById.size()]);
     }
 
+    public void tieUpLooseEnds() {
+        for (Relationship r : getRelationships()) {
+            if (!containsNode(r.getStartNode()) || !containsNode(r.getEndNode())) {
+                relationshipsById.remove(r.getId());
+            }
+        }
+    }
+
 }
