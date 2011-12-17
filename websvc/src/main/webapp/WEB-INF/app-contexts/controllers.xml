@@ -3,10 +3,6 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
-    <bean id="graphDB" class="org.neo4j.kernel.EmbeddedGraphDatabase" destroy-method="shutdown" lazy-init="false">
-        <constructor-arg type="java.lang.String" value="/proj/pngisb/databases/haircycling.20111213.db"/>
-    </bean>
-
     <bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
         <property name="alwaysUseFullPath" value="true"/>
         <property name="urlMap">
@@ -17,7 +13,5 @@
             </map>
         </property>
     </bean>
-
-    <bean class="org.systemsbiology.cancerregulome.hukilau.utils.EmbeddedNeo4j" autowire="byType"/>
 
 </beans>

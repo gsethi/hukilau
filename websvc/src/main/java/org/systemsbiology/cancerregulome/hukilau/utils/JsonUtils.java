@@ -13,11 +13,12 @@ import java.util.Map;
  * @author hrovira
  */
 public class JsonUtils {
-    public static JSONArray createNodeJSON(NodeMaps nodeMaps) throws JSONException {
+    public static JSONArray createNodeJSON(String baseUri, NodeMaps nodeMaps) throws JSONException {
         JSONArray jsonArray = new JSONArray();
         for (Node n : nodeMaps.getNodes()) {
             JSONObject json = new JSONObject();
             json.put("id", n.getId());
+            json.put("uri", baseUri + "/nodes/" + n.getId());
             for (String propKey : n.getPropertyKeys()) {
                 json.put(propKey, n.getProperty(propKey));
             }
@@ -27,11 +28,12 @@ public class JsonUtils {
         return jsonArray;
     }
 
-    public static JSONArray createEdgeJSON(NodeMaps nodeMaps) throws JSONException {
+    public static JSONArray createEdgeJSON(String baseUri, NodeMaps nodeMaps) throws JSONException {
         JSONArray jsonArray = new JSONArray();
         for (Relationship r : nodeMaps.getRelationships()) {
             JSONObject json = new JSONObject();
             json.put("id", r.getId());
+            json.put("uri", baseUri + "/edges/" + r.getId());
             json.put("source", r.getStartNode().getId());
             json.put("target", r.getEndNode().getId());
 
