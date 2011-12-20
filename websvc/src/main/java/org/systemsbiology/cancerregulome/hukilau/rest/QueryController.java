@@ -5,7 +5,7 @@ import org.json.JSONObject;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexManager;
-import org.neo4j.kernel.EmbeddedGraphDatabase;
+import org.neo4j.kernel.AbstractGraphDatabase;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,7 +37,7 @@ import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.travers
 @Controller
 public class QueryController implements InitializingBean {
     private static final Logger log = Logger.getLogger(QueryController.class.getName());
-    private final Map<String, EmbeddedGraphDatabase> graphDbsById = new HashMap<String, EmbeddedGraphDatabase>();
+    private final Map<String, AbstractGraphDatabase> graphDbsById = new HashMap<String, AbstractGraphDatabase>();
     private final Map<String, String> labelsByUri = new HashMap<String, String>();
 
     private JsonConfig jsonConfig;
@@ -74,9 +74,7 @@ public class QueryController implements InitializingBean {
 
     @RequestMapping(value = "/**/graphs/{graphDbId}", method = RequestMethod.GET)
     protected ModelAndView listNetwork(HttpServletRequest request, @PathVariable("graphDbId") String graphDbId) throws Exception {
-//        EmbeddedGraphDatabase graphDB = graphDbsById.get(graphDbId);
         String uri = substringAfterLast(request.getRequestURI(), request.getContextPath());
-
         log.info("graphDbId=" + graphDbId);
 
         // TODO : Lookup nodes based on search criteria
@@ -106,7 +104,7 @@ public class QueryController implements InitializingBean {
         // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
 
-        EmbeddedGraphDatabase graphDB = graphDbsById.get(graphDbId);
+        AbstractGraphDatabase graphDB = graphDbsById.get(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
