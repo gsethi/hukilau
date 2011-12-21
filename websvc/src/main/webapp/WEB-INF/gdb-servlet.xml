@@ -7,6 +7,7 @@
 
     <bean id="handlerExceptionResolver" class="org.systemsbiology.addama.commons.web.resolvers.QuietSimpleMappingExceptionResolver">
         <property name="warnLogCategory" value="gdb-servlet"/>
+        <property name="verbose" value="true"/>
         <property name="exceptionMappings">
             <props>
                 <prop key="java.lang.UnsupportedOperationException">notImplementedView</prop>
