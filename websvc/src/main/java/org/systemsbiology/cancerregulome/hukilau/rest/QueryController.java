@@ -11,7 +11,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import org.systemsbiology.addama.commons.web.exceptions.InvalidSyntaxException;
 import org.systemsbiology.addama.commons.web.views.JsonItemsView;
 import org.systemsbiology.addama.commons.web.views.JsonView;
 import org.systemsbiology.addama.jsonconfig.JsonConfig;
@@ -21,12 +23,13 @@ import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
 import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static org.apache.commons.lang.StringUtils.substringAfterLast;
-import static org.apache.commons.lang.StringUtils.substringBetween;
+import static org.apache.commons.lang.StringUtils.*;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
 import static org.springframework.web.bind.ServletRequestUtils.getStringParameter;
 import static org.systemsbiology.cancerregulome.hukilau.utils.JsonUtils.*;
@@ -99,9 +102,9 @@ public class QueryController implements InitializingBean {
     }
 
     @RequestMapping(value = "/**/graphs/{graphDbId}/nodes/{nodeId}", method = RequestMethod.GET)
-    protected ModelAndView handleGraphRetrieval(HttpServletRequest request,
-                                                @PathVariable("graphDbId") String graphDbId,
-                                                @PathVariable("nodeId") String nodeId) throws Exception {
+    protected ModelAndView retrieveNode(HttpServletRequest request,
+                                        @PathVariable("graphDbId") String graphDbId,
+                                        @PathVariable("nodeId") String nodeId) throws Exception {
         // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
         String nodeLabel = getStringParameter(request, "nodeLabel", "name");
@@ -112,7 +115,7 @@ public class QueryController implements InitializingBean {
         Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
 
-        NodeMaps nodeMaps = traverseFrom(searchNode, traversalLevel);
+        NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNode);
 
         log.info("number of nodes: " + nodeMaps.numberOfNodes());
         log.info("number of relationships: " + nodeMaps.numberOfRelationships());
@@ -130,4 +133,48 @@ public class QueryController implements InitializingBean {
         return new ModelAndView(new JsonNetworkView()).addObject("data", data).addObject("dataSchema", dataSchema);
     }
 
+    @RequestMapping(value = "/**/graphs/{graphDbId}/query", method = RequestMethod.GET)
+    protected ModelAndView queryGraph(HttpServletRequest request,
+                                      @PathVariable("graphDbId") String graphDbId,
+                                      @RequestParam("query") String query) throws Exception {
+        // TODO : Lookup node by name or by ID?
+        int traversalLevel = getIntParameter(request, "level", 1);
+        String nodeLabel = getStringParameter(request, "nodeLabel", "name");
+        String edgeLabel = getStringParameter(request, "edgeLabel", "");
+
+        if (isEmpty(query)) {
+            throw new InvalidSyntaxException("missing 'query' object");
+        }
+
+        JSONObject queryJson = new JSONObject(query);
+
+        AbstractGraphDatabase graphDB = graphDbsById.get(graphDbId);
+        IndexManager indexMgr = graphDB.index();
+        Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
+
+        ArrayList<Node> searchNodes = new ArrayList<Node>();
+        Iterator itr = queryJson.keys();
+        while (itr.hasNext()) {
+            String key = (String) itr.next();
+            String value = queryJson.getString(key);
+            searchNodes.add(nodeIdx.get(key, value).getSingle());
+        }
+
+        NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNodes.toArray(new Node[searchNodes.size()]));
+
+        log.info("number of nodes: " + nodeMaps.numberOfNodes());
+        log.info("number of relationships: " + nodeMaps.numberOfRelationships());
+
+        String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/query");
+
+        JSONObject data = new JSONObject();
+        data.put("nodes", createNodeJSON(baseUri, nodeMaps, nodeLabel));
+        data.put("edges", createEdgeJSON(baseUri, nodeMaps, edgeLabel));
+
+        JSONObject dataSchema = new JSONObject();
+        dataSchema.put("nodes", nodeSchemaJSON(nodeMaps.getNodeProperties()));
+        dataSchema.put("edges", edgeSchemaJSON(nodeMaps.getRelationshipProperties()));
+
+        return new ModelAndView(new JsonNetworkView()).addObject("data", data).addObject("dataSchema", dataSchema);
+    }
 }

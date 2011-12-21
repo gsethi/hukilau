@@ -11,36 +11,38 @@ import java.util.ArrayList;
  */
 public class NetworkOps {
 
-    public static NodeMaps traverseFrom(Node startNode, Integer traversalLevel) {
+    public static NodeMaps traverseFrom(Integer traversalLevel, Node... startNodes) {
         NodeMaps nodeMaps = new NodeMaps();
 
         ArrayList<Node> unProcessedNodes = new ArrayList<Node>();
         ArrayList<Node> inProcessNodes = new ArrayList<Node>();
 
-        inProcessNodes.add(startNode);
-        for (int i = 0; i < traversalLevel; i++) {
-            for (Node pNode : inProcessNodes) {
-                nodeMaps.addNode(pNode);
+        for (Node startNode : startNodes) {
+            inProcessNodes.add(startNode);
+            for (int i = 0; i < traversalLevel; i++) {
+                for (Node pNode : inProcessNodes) {
+                    nodeMaps.addNode(pNode);
 
-                //getting both outbound and inbound relationships to the node
-                for (Relationship rel : pNode.getRelationships()) {
-                    nodeMaps.addRelationship(rel);
+                    //getting both outbound and inbound relationships to the node
+                    for (Relationship rel : pNode.getRelationships()) {
+                        nodeMaps.addRelationship(rel);
 
-                    //put other node of relationship in list to be processed if it hasn't been processed already
-                    Node otherNode = rel.getOtherNode(pNode);
-                    if (!nodeMaps.containsNode(otherNode)) {
-                        unProcessedNodes.add(otherNode);
+                        //put other node of relationship in list to be processed if it hasn't been processed already
+                        Node otherNode = rel.getOtherNode(pNode);
+                        if (!nodeMaps.containsNode(otherNode)) {
+                            unProcessedNodes.add(otherNode);
+                        }
                     }
                 }
-            }
 
-            //transfer unProcessed to processing
-            inProcessNodes = new ArrayList<Node>();
-            for (Node n : unProcessedNodes) {
-                inProcessNodes.add(n);
-            }
+                //transfer unProcessed to processing
+                inProcessNodes = new ArrayList<Node>();
+                for (Node n : unProcessedNodes) {
+                    inProcessNodes.add(n);
+                }
 
-            unProcessedNodes = new ArrayList<Node>();
+                unProcessedNodes = new ArrayList<Node>();
+            }
         }
 
         nodeMaps.tieUpLooseEnds();
