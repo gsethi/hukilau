@@ -9,6 +9,8 @@ import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
 
 import java.util.Map;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
+
 /**
  * @author hrovira
  */
@@ -31,7 +33,7 @@ public class JsonUtils {
         return jsonArray;
     }
 
-    public static JSONArray createEdgeJSON(String baseUri, NodeMaps nodeMaps) throws JSONException {
+    public static JSONArray createEdgeJSON(String baseUri, NodeMaps nodeMaps, String edgeLabel) throws JSONException {
         JSONArray jsonArray = new JSONArray();
         for (Relationship r : nodeMaps.getRelationships()) {
             JSONObject json = new JSONObject();
@@ -42,6 +44,10 @@ public class JsonUtils {
 
             for (String propKey : r.getPropertyKeys()) {
                 json.put(propKey, r.getProperty(propKey));
+            }
+
+            if (!json.has("label") && !isEmpty(edgeLabel)) {
+                json.put("label", json.optString(edgeLabel));
             }
 
             jsonArray.put(json);

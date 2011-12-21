@@ -105,6 +105,7 @@ public class QueryController implements InitializingBean {
         // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
         String nodeLabel = getStringParameter(request, "nodeLabel", "name");
+        String edgeLabel = getStringParameter(request, "edgeLabel", "");
 
         AbstractGraphDatabase graphDB = graphDbsById.get(graphDbId);
         IndexManager indexMgr = graphDB.index();
@@ -120,7 +121,7 @@ public class QueryController implements InitializingBean {
 
         JSONObject data = new JSONObject();
         data.put("nodes", createNodeJSON(baseUri, nodeMaps, nodeLabel));
-        data.put("edges", createEdgeJSON(baseUri, nodeMaps));
+        data.put("edges", createEdgeJSON(baseUri, nodeMaps, edgeLabel));
 
         JSONObject dataSchema = new JSONObject();
         dataSchema.put("nodes", nodeSchemaJSON(nodeMaps.getNodeProperties()));
