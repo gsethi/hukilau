@@ -23,18 +23,10 @@
                 });
             }
 
-            Ext.onReady(function() {
+            function loadGraph(uri) {
                 Ext.Ajax.request({
                     method: "get",
-                    url: "/addama/datasources/graphs",
-                    success: function(o) {
-                        Ext.getDom("c_graphs").innerHTML = o.responseText;
-                    }
-                });
-
-                Ext.Ajax.request({
-                    method: "get",
-                    url: "/addama/datasources/graphs/haircycling.20111213/nodes/4?level=2",
+                    url: uri,
                     success: function(o) {
                         var json = Ext.util.JSON.decode(o.responseText);
 
@@ -49,6 +41,39 @@
                         });
                     }
                 });
+            }
+
+            Ext.onReady(function() {
+                Ext.Ajax.request({
+                    method: "get",
+                    url: "/addama/datasources/graphs",
+                    success: function(o) {
+                        var json = Ext.util.JSON.decode(o.responseText);
+
+                        if (json.numberOfItems > 0) {
+                            var graphs = [];
+                            var graph_div = Ext.get('c_graphs')
+
+                            for (var i = 0; i < json.numberOfItems; i++) {
+                                var item = json.items[i];
+                                graphs.push( {tag: 'li',
+                                              id:'li_graph_' + i,
+                                              html: item.label } )
+                            }
+                            
+                            Ext.DomHelper.append(graph_div, {tag: 'ul', children: graphs}, true)
+                            
+                            for (var i = 0; i < json.numberOfItems; i++) {
+                                var item = json.items[i];
+                                Ext.get('li_graph_' + i).on('click', function(d) {
+                                    loadGraph(item.uri + "/nodes/4?level=2");
+                                });
+                            }
+                        }
+                    }
+                });
+                
+                
             });
         </script>
     </head>
@@ -56,6 +81,7 @@
         <h3>Graph Database Results</h3>
         <a href="#" onclick="RefreshUI(); return false;">Refresh UI Version</a>
         <div id="c_graphs"></div>
+        <div id="c_search"></div>
         <div id="c_vis"></div>
     </body>
 </html>
