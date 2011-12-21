@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import static org.apache.commons.lang.StringUtils.substringAfterLast;
 import static org.apache.commons.lang.StringUtils.substringBetween;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
+import static org.springframework.web.bind.ServletRequestUtils.getStringParameter;
 import static org.systemsbiology.cancerregulome.hukilau.utils.JsonUtils.*;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
 
@@ -103,6 +104,7 @@ public class QueryController implements InitializingBean {
                                                 @PathVariable("nodeId") String nodeId) throws Exception {
         // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
+        String nodeLabel = getStringParameter(request, "nodeLabel", "name");
 
         AbstractGraphDatabase graphDB = graphDbsById.get(graphDbId);
         IndexManager indexMgr = graphDB.index();
@@ -117,7 +119,7 @@ public class QueryController implements InitializingBean {
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/nodes");
 
         JSONObject data = new JSONObject();
-        data.put("nodes", createNodeJSON(baseUri, nodeMaps));
+        data.put("nodes", createNodeJSON(baseUri, nodeMaps, nodeLabel));
         data.put("edges", createEdgeJSON(baseUri, nodeMaps));
 
         JSONObject dataSchema = new JSONObject();
