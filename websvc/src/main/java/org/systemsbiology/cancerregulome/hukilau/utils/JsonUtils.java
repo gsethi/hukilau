@@ -13,7 +13,7 @@ import java.util.Map;
  * @author hrovira
  */
 public class JsonUtils {
-    public static JSONArray createNodeJSON(String baseUri, NodeMaps nodeMaps) throws JSONException {
+    public static JSONArray createNodeJSON(String baseUri, NodeMaps nodeMaps, String nodeLabel) throws JSONException {
         JSONArray jsonArray = new JSONArray();
         for (Node n : nodeMaps.getNodes()) {
             JSONObject json = new JSONObject();
@@ -21,6 +21,9 @@ public class JsonUtils {
             json.put("uri", baseUri + "/nodes/" + n.getId());
             for (String propKey : n.getPropertyKeys()) {
                 json.put(propKey, n.getProperty(propKey));
+            }
+            if (!json.has("label")) {
+                json.put("label", json.optString(nodeLabel));
             }
 
             jsonArray.put(json);
@@ -62,6 +65,7 @@ public class JsonUtils {
 
     private static void appendCommon(Map<String, String> propertyMap, JSONArray jsonArray) throws JSONException {
         jsonArray.put(new JSONObject().put("name", "id").put("type", "string"));
+        jsonArray.put(new JSONObject().put("name", "label").put("type", "string"));
         jsonArray.put(new JSONObject().put("name", "uri").put("type", "string"));
         jsonArray.put(new JSONObject().put("name", "name").put("type", "string"));
         for (Map.Entry<String, String> entry : propertyMap.entrySet()) {
