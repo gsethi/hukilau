@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.systemsbiology.addama.commons.web.exceptions.InvalidSyntaxException;
+import org.systemsbiology.addama.commons.web.exceptions.ResourceNotFoundException;
 import org.systemsbiology.addama.commons.web.views.JsonItemsView;
 import org.systemsbiology.addama.commons.web.views.JsonView;
 import org.systemsbiology.addama.jsonconfig.JsonConfig;
@@ -31,6 +32,7 @@ import java.util.logging.Logger;
 
 import static org.apache.commons.lang.StringUtils.*;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
+import static org.systemsbiology.cancerregulome.hukilau.utils.JsonUtils.addNumberOf;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
 import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.BASE_URI;
 import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.NODE_MAPS;
@@ -81,17 +83,22 @@ public class QueryController implements InitializingBean {
         String uri = substringAfterLast(request.getRequestURI(), request.getContextPath());
         log.info("graphDbId=" + graphDbId);
 
-        // TODO : Lookup nodes based on search criteria
-        log.info("request=" + request.getParameterMap());
+        AbstractGraphDatabase graphDb = getGraphDb(graphDbId);
+        IndexManager indexMgr = graphDb.index();
 
         JSONObject json = new JSONObject();
         json.put("uri", uri);
         json.put("name", graphDbId);
 
-        JSONObject data = new JSONObject();
-        data.put("nodes", new JSONArray());
-        data.put("edges", new JSONArray());
-        json.put("data", data);
+        for (String niName : indexMgr.nodeIndexNames()) {
+            json.append("nodeTypes", new JSONObject().put("name", niName).put("uri", uri + "/nodeTypes/" + niName));
+        }
+        addNumberOf(json, "nodeTypes");
+
+        for (String riName : indexMgr.relationshipIndexNames()) {
+            json.append("edgeTypes", new JSONObject().put("name", riName).put("uri", uri + "/edgeTypes/" + riName));
+        }
+        addNumberOf(json, "edgeTypes");
 
         JSONObject dataSchema = new JSONObject();
         dataSchema.put("nodes", new JSONArray());
@@ -108,7 +115,7 @@ public class QueryController implements InitializingBean {
         // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
 
-        AbstractGraphDatabase graphDB = graphDbsById.get(graphDbId);
+        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
@@ -132,7 +139,7 @@ public class QueryController implements InitializingBean {
 
         JSONObject queryJson = new JSONObject(query);
 
-        AbstractGraphDatabase graphDB = graphDbsById.get(graphDbId);
+        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
 
@@ -148,5 +155,16 @@ public class QueryController implements InitializingBean {
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/query");
 
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+    }
+
+    private AbstractGraphDatabase getGraphDb(String graphDbId) throws ResourceNotFoundException {
+        if (!this.graphDbsById.containsKey(graphDbId)) {
+            throw new ResourceNotFoundException(graphDbId);
+        }
+        AbstractGraphDatabase graphDb = graphDbsById.get(graphDbId);
+        if (graphDb == null) {
+            throw new ResourceNotFoundException(graphDbId);
+        }
+        return graphDb;
     }
 }
