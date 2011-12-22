@@ -8,13 +8,17 @@ import org.neo4j.graphdb.Relationship;
 import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
+import static org.apache.commons.lang.StringUtils.capitalize;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
  * @author hrovira
  */
 public class JsonUtils {
+    private static final Logger log = Logger.getLogger(JsonUtils.class.getName());
+
     public static JSONArray createNodeJSON(String baseUri, NodeMaps nodeMaps, String nodeLabel) throws JSONException {
         JSONArray jsonArray = new JSONArray();
         for (Node n : nodeMaps.getNodes()) {
@@ -67,6 +71,20 @@ public class JsonUtils {
         jsonArray.put(new JSONObject().put("name", "target").put("type", "string"));
         appendCommon(propertyMap, jsonArray);
         return jsonArray;
+    }
+
+    public static void addNumberOf(JSONObject json, String arrayKey) {
+        try {
+            if (!json.has(arrayKey)) {
+                json.put(arrayKey, new JSONArray());
+            }
+
+            JSONArray items = json.getJSONArray(arrayKey);
+            json.put("numberOf" + capitalize(arrayKey), items.length());
+        } catch (JSONException e) {
+            log.warning(e.getMessage());
+        }
+
     }
 
     private static void appendCommon(Map<String, String> propertyMap, JSONArray jsonArray) throws JSONException {
