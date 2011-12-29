@@ -15,24 +15,15 @@
         <script type="text/javascript" src="https://informatics-apps.systemsbiology.net/cytoscapeweb_v0.8/js/min/AC_OETags.min.js"></script>
         <script type="text/javascript" src="https://informatics-apps.systemsbiology.net/cytoscapeweb_v0.8/js/min/cytoscapeweb.min.js"></script>
 
-        <script type="text/javascript" src="http://eggplant:9089/js/messagebus.js"></script>
-        <script type="text/javascript" src="http://eggplant:9089/js/graph_settings.js"></script>
-                        
-        <script type="text/javascript">
-            function RefreshUI() {
-                Ext.Ajax.request({ method: "POST", url: "/addama/ui/refresh",
-                    success: function() {
-                        document.location = document.location.href;
-                    }
-                });
-            }
-        </script>
+        <script type="text/javascript" src="https://addama.googlecode.com/hg-history/2.1/user-interfaces/src/main/html/addama/ui/topbar.js"></script>
+        <script type="text/javascript" src="https://hukilau.googlecode.com/hg/uis/addama/ui/hukilau/js/messagebus.js"></script>
+        <script type="text/javascript" src="https://hukilau.googlecode.com/hg/uis/addama/ui/hukilau/js/graph_settings.js"></script>
+        <script type="text/javascript" src="https://hukilau.googlecode.com/hg/uis/addama/ui/hukilau/js/graph_display.js"></script>
+        <script type="text/javascript" src="https://hukilau.googlecode.com/hg/uis/addama/ui/hukilau/js/viewport.js"></script>                     
     </head>
     <body>
-        <h3>Graph Database Results</h3>
-        <a href="#" onclick="RefreshUI(); return false;">Refresh UI Version</a>
-        <div id="c_graphdb_select"></div>
-        <div id="c_search"></div>
-        <div id="c_vis"></div>
+        <div id="c_addama_topbar"></div>
+        <div id="c_graph_control"></div>
+        <div id="c_vis"></div>    
     </body>
 </html>
