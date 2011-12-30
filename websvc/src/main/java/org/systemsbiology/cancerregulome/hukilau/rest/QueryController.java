@@ -117,7 +117,7 @@ public class QueryController implements InitializingBean {
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
-        Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
+        Index<Node> nodeIdx = indexMgr.forNodes("genNodeIdx");
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
 
         NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNode);
@@ -141,7 +141,7 @@ public class QueryController implements InitializingBean {
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
-        Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
+        Index<Node> nodeIdx = indexMgr.forNodes("genNodeIdx");
 
         ArrayList<Node> searchNodes = new ArrayList<Node>();
         Iterator itr = queryJson.keys();
