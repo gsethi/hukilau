@@ -178,7 +178,6 @@ public class DBImport {
 
     private static void addProperty(String column, Map<String, String> propTypes, String s, Map<String, Object> nProperties, Map<String, Object> iProperties) {
         if(propTypes.containsKey(column)){
-            log.info("found key: " + column);
             String type = propTypes.get(column);
             if(type.equals("int")){
                 nProperties.put(column, Integer.parseInt(s));
