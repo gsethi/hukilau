@@ -1,14 +1,10 @@
 Ext.onReady(function() {
 
     new org.systemsbiology.addama.js.TopBar({contentEl: "c_addama_topbar"});
-    var ajaxMonitor = new org.systemsbiology.addama.js.widgets.AjaxMonitor();
 
     var graphQueryTabs = new Ext.TabPanel({
         activeTab: 0,
-        items: [
-            org.systemsbiology.hukilau.apis.panels.NodeQuery,
-            ajaxMonitor.gridPanel
-        ]
+        items: [ org.systemsbiology.hukilau.apis.panels.NodeQuery ]
     });
 
     var graphControlPanel = {
