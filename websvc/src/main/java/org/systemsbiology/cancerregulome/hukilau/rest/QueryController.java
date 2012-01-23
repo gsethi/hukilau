@@ -17,9 +17,9 @@ import org.systemsbiology.addama.commons.web.exceptions.InvalidSyntaxException;
 import org.systemsbiology.addama.commons.web.exceptions.ResourceNotFoundException;
 import org.systemsbiology.addama.commons.web.views.JsonItemsView;
 import org.systemsbiology.addama.commons.web.views.JsonView;
-import org.systemsbiology.addama.jsonconfig.JsonConfig;
-import org.systemsbiology.addama.jsonconfig.impls.StringMapJsonConfigHandler;
-import org.systemsbiology.cancerregulome.hukilau.configs.Neo4jGraphJsonConfigHandler;
+import org.systemsbiology.addama.jsonconfig.ServiceConfig;
+import org.systemsbiology.addama.jsonconfig.impls.StringPropertyByIdMappingsHandler;
+import org.systemsbiology.cancerregulome.hukilau.configs.Neo4jGraphDbMappingsHandler;
 import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
 import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
 
@@ -46,15 +46,15 @@ public class QueryController implements InitializingBean {
     private final Map<String, AbstractGraphDatabase> graphDbsById = new HashMap<String, AbstractGraphDatabase>();
     private final Map<String, String> labelsByUri = new HashMap<String, String>();
 
-    private JsonConfig jsonConfig;
+    private ServiceConfig serviceConfig;
 
-    public void setJsonConfig(JsonConfig jsonConfig) {
-        this.jsonConfig = jsonConfig;
+    public void setServiceConfig(ServiceConfig serviceConfig) {
+        this.serviceConfig = serviceConfig;
     }
 
     public void afterPropertiesSet() throws Exception {
-        this.jsonConfig.visit(new Neo4jGraphJsonConfigHandler(graphDbsById));
-        this.jsonConfig.visit(new StringMapJsonConfigHandler(labelsByUri, "label"));
+        this.serviceConfig.visit(new Neo4jGraphDbMappingsHandler(graphDbsById));
+        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsByUri, "label"));
     }
 
     /*
