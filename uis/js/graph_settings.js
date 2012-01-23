@@ -1,4 +1,4 @@
-Ext.ns('org.systemsbiology.hukilau.apis.panels')
+Ext.ns('org.systemsbiology.hukilau.apis.panels');
 
 org.systemsbiology.hukilau.apis.panels.GraphDatabaseSelect = new Ext.Panel({
     id: 'graph_settings_panel',
@@ -31,7 +31,7 @@ org.systemsbiology.hukilau.apis.panels.GraphDatabaseSelect = new Ext.Panel({
 				}),
 
 				root: 'items',
-				fields: ['label', 'uri'],
+				fields: ['label', 'uri']
             }),
             listeners: {
         		select: {
