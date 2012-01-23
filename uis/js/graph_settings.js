@@ -26,7 +26,7 @@ org.systemsbiology.hukilau.apis.panels.GraphDatabaseSelect = new Ext.Panel({
 				storeId: 'available_graph_store',
 				autoLoad: true,
 				proxy: new Ext.data.HttpProxy({
-					url: '/addama/datasources/graphs',
+					url: '/addama/graphs',
 					method: 'GET'
 				}),
 
