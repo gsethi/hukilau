@@ -24,20 +24,6 @@ Ext.onReady(function() {
         items: [
             org.systemsbiology.hukilau.apis.panels.GraphDatabaseSelect,
             graphQueryTabs
-        ],
-        bbar: [
-            {
-                text: "Refresh UI",
-                listeners: {
-                    click: function() {
-                        Ext.Ajax.request({ method: "POST", url: "/addama/ui/refresh",
-                            success: function() {
-                                document.location = document.location.href;
-                            }
-                        });
-                    }
-                }
-            }
         ]
     };
 
