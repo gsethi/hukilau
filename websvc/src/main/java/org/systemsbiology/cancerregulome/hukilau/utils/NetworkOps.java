@@ -21,16 +21,18 @@ public class NetworkOps {
             inProcessNodes.add(startNode);
             for (int i = 0; i < traversalLevel; i++) {
                 for (Node pNode : inProcessNodes) {
-                    nodeMaps.addNode(pNode);
+                    if (pNode != null) {
+                        nodeMaps.addNode(pNode);
 
-                    //getting both outbound and inbound relationships to the node
-                    for (Relationship rel : pNode.getRelationships()) {
-                        nodeMaps.addRelationship(rel);
+                        //getting both outbound and inbound relationships to the node
+                        for (Relationship rel : pNode.getRelationships()) {
+                            nodeMaps.addRelationship(rel);
 
-                        //put other node of relationship in list to be processed if it hasn't been processed already
-                        Node otherNode = rel.getOtherNode(pNode);
-                        if (!nodeMaps.containsNode(otherNode)) {
-                            unProcessedNodes.add(otherNode);
+                            //put other node of relationship in list to be processed if it hasn't been processed already
+                            Node otherNode = rel.getOtherNode(pNode);
+                            if (!nodeMaps.containsNode(otherNode)) {
+                                unProcessedNodes.add(otherNode);
+                            }
                         }
                     }
                 }
