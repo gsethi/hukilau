@@ -43,7 +43,7 @@ import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.NO
 public class QueryController implements InitializingBean {
     private static final Logger log = Logger.getLogger(QueryController.class.getName());
     private final Map<String, AbstractGraphDatabase> graphDbsById = new HashMap<String, AbstractGraphDatabase>();
-    private final Map<String, String> labelsByUri = new HashMap<String, String>();
+    private final Map<String, String> labelsByid = new HashMap<String, String>();
 
     private ServiceConfig serviceConfig;
 
@@ -53,7 +53,7 @@ public class QueryController implements InitializingBean {
 
     public void afterPropertiesSet() throws Exception {
         this.serviceConfig.visit(new Neo4jGraphDbMappingsHandler(graphDbsById));
-        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsByUri, "label"));
+        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsByid, "label"));
     }
 
     /*
@@ -69,8 +69,9 @@ public class QueryController implements InitializingBean {
             JSONObject item = new JSONObject();
             String graphDbUri = uri + "/" + id;
             item.put("uri", graphDbUri);
+            item.put("id", id);
             item.put("name", id);
-            item.put("label", labelsByUri.get(graphDbUri));
+            item.put("label", labelsByid.get(id));
             json.append("items", item);
         }
 
