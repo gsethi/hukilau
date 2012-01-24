@@ -39,7 +39,7 @@
         <servlet-class>org.systemsbiology.addama.commons.web.MavenPomVersionServlet</servlet-class>
         <init-param>
             <param-name>pom_location</param-name>
-            <param-value>META-INF/maven/org.systemsbiology.cancerregulome/hukilau-svc</param-value>
+            <param-value>META-INF/maven/org.systemsbiology.cancerregulome/websvc</param-value>
         </init-param>
         <load-on-startup>2</load-on-startup>
     </servlet>
