@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 
 import static org.apache.commons.lang.StringUtils.*;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
-import static org.systemsbiology.cancerregulome.hukilau.utils.JsonUtils.addNumberOf;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
 import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.BASE_URI;
 import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.NODE_MAPS;
@@ -83,22 +82,19 @@ public class QueryController implements InitializingBean {
         String uri = substringAfterLast(request.getRequestURI(), request.getContextPath());
         log.info("graphDbId=" + graphDbId);
 
-        AbstractGraphDatabase graphDb = getGraphDb(graphDbId);
-        IndexManager indexMgr = graphDb.index();
+//        AbstractGraphDatabase graphDb = getGraphDb(graphDbId);
+//        IndexManager indexMgr = graphDb.index("generalIdx");
 
         JSONObject json = new JSONObject();
         json.put("uri", uri);
         json.put("name", graphDbId);
 
-        for (String niName : indexMgr.nodeIndexNames()) {
-            json.append("nodeTypes", new JSONObject().put("name", niName).put("uri", uri + "/nodeTypes/" + niName));
-        }
-        addNumberOf(json, "nodeTypes");
+        // TODO : Need to add node types, edge types, and property data types to the response
+//            json.append("nodeTypes", new JSONObject().put("name", niName).put("uri", uri + "/nodeTypes/" + niName));
+//        addNumberOf(json, "nodeTypes");
 
-        for (String riName : indexMgr.relationshipIndexNames()) {
-            json.append("edgeTypes", new JSONObject().put("name", riName).put("uri", uri + "/edgeTypes/" + riName));
-        }
-        addNumberOf(json, "edgeTypes");
+//            json.append("edgeTypes", new JSONObject().put("name", riName).put("uri", uri + "/edgeTypes/" + riName));
+//        addNumberOf(json, "edgeTypes");
 
         JSONObject dataSchema = new JSONObject();
         dataSchema.put("nodes", new JSONArray());
@@ -117,7 +113,7 @@ public class QueryController implements InitializingBean {
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
-        Index<Node> nodeIdx = indexMgr.forNodes("genNodeIdx");
+        Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
 
         NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNode);
@@ -141,7 +137,7 @@ public class QueryController implements InitializingBean {
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
-        Index<Node> nodeIdx = indexMgr.forNodes("genNodeIdx");
+        Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
 
         ArrayList<Node> searchNodes = new ArrayList<Node>();
         Iterator itr = queryJson.keys();
