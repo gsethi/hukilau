@@ -43,7 +43,8 @@ import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.NO
 public class QueryController implements InitializingBean {
     private static final Logger log = Logger.getLogger(QueryController.class.getName());
     private final Map<String, AbstractGraphDatabase> graphDbsById = new HashMap<String, AbstractGraphDatabase>();
-    private final Map<String, String> labelsByid = new HashMap<String, String>();
+    private final Map<String, String> labelsById = new HashMap<String, String>();
+    private final Map<String, String> nodeIdxById = new HashMap<String, String>();
 
     private ServiceConfig serviceConfig;
 
@@ -53,7 +54,8 @@ public class QueryController implements InitializingBean {
 
     public void afterPropertiesSet() throws Exception {
         this.serviceConfig.visit(new Neo4jGraphDbMappingsHandler(graphDbsById));
-        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsByid, "label"));
+        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsById, "label"));
+        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(nodeIdxById, "nodeIdx"));
     }
 
     /*
@@ -71,7 +73,7 @@ public class QueryController implements InitializingBean {
             item.put("uri", graphDbUri);
             item.put("id", id);
             item.put("name", id);
-            item.put("label", labelsByid.get(id));
+            item.put("label", labelsById.get(id));
             json.append("items", item);
         }
 
@@ -88,7 +90,9 @@ public class QueryController implements InitializingBean {
 
         JSONObject json = new JSONObject();
         json.put("uri", uri);
+        json.put("id", graphDbId);
         json.put("name", graphDbId);
+        json.put("label", labelsById.get(graphDbId));
 
         // TODO : Need to add node types, edge types, and property data types to the response
 //            json.append("nodeTypes", new JSONObject().put("name", niName).put("uri", uri + "/nodeTypes/" + niName));
@@ -114,7 +118,7 @@ public class QueryController implements InitializingBean {
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
-        Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
+        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
 
         NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNode);
@@ -138,7 +142,7 @@ public class QueryController implements InitializingBean {
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
-        Index<Node> nodeIdx = indexMgr.forNodes("generalIdx");
+        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
 
         ArrayList<Node> searchNodes = new ArrayList<Node>();
         Iterator itr = queryJson.keys();
