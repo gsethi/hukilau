@@ -6,75 +6,27 @@ var GraphManager = Ext.extend(Object, {
         edges: {}
     },
 
-    addNodes: function(node_uris) {
-        var qh = org.systemsbiology.hukilau.components.QueryHandler;
-        var added = [];
-
-        var n = node_uris.length;
+    addNodes: function(node_rows) {
+        var n = node_rows.length;
         for (var i = 0; i < n; i++) {
-            var uri = node_uris[i];
-            if ( !this.graph.nodes.hasOwnProperty(uri) ) {
-                this.graph.nodes[uri] = true;
-                added.push(uri);
+            var data = node_rows[i].data;
+            if ( !this.graph.nodes.hasOwnProperty(data.uri) ) {
+                this.graph.nodes[data.uri] = data;
             }
         }
-
-        // return {
-        //     nodes: added,
-        //     edges: []
-        // };
-    },
-
-    // addNodesHandler: function(node_rows) {
-    //     var added = this.addNodes(node_rows);
-    //     if (added.length > 0) {
-    //         org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_topology_update', added);
-    //     }
-    // },
-
-    addEdges: function(edge_uris) {
-        var current_data = org.systemsbiology.hukilau.components.QueryHandler.getCurrentData();
-        var added = [];
-
-        var n = edge_uris.length;
-        for (var i = 0; i < n; i++) {
-            var uri = edge_uris[i];
-
-            if ( !this.graph.edges.hasOwnProperty(uri) ) {
-                var edge = current_data.edges[uri];
-                this.addNodes([edge.source, edge.target]);
-                this.graph.edges[uri] = true;
-                added.push(uri);
-            }
-        }
-
-        // if (added.length > 0) {
-        //     org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_edges_update', added);
-        // }
-        
-    //     return {
-    //         nodes: [],
-    //         edges: added
-    //     };
     },
     
-    // addEdges: function(edge_rows) {
-    //     var added = [];
+    addEdges: function(edge_rows) {
+        var n = edge_rows.length;
+        for (var i = 0; i < n; i++) {
+            var edge = edge_rows[i].data;
 
-    //     var n = edge_rows.length;
-    //     for (var i = 0; i < n; i++) {
-    //         var edge = edge_rows[i].data;
-
-    //         if ( !this.graph.edges.hasOwnProperty(edge.uri) ) {
-    //             this.graph.edges[edge.uri] = edge;
-    //             added.push(edge.uri);
-    //         }
-    //     }
-
-    //     if (added.length > 0) {
-    //         org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_edges_update', added);
-    //     }
-    // },
+            if ( !this.graph.edges.hasOwnProperty(edge.uri) ) {
+                this.addNo
+                this.graph.edges[edge.uri] = edge;
+            }
+        }
+    },
 
     removeNode: function(nodes) {
         

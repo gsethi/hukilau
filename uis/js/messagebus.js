@@ -15,4 +15,3 @@ org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('graph_dataschema_av
 org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('add_edges_to_graph');
 org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('graph_dataschema_update');
 org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('graph_topology_update');
-
