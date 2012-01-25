@@ -1,0 +1,9 @@
+#c_vis 
+	height: 700px;
+	width: 700px;
+}
+
+p.graph_error {
+	font: arial;
+	fontsize: 120%;
+}
