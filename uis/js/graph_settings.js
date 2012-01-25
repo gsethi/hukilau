@@ -218,3 +218,74 @@ org.systemsbiology.hukilau.apis.panels.NodeQuery = new Ext.Panel({
 		}
 	}
 });
+
+org.systemsbiology.hukilau.apis.panels.QueryResultInfo = new Ext.Panel({
+	id: 'query_result_panel',
+	title: 'Query Result',
+	layout: 'form',
+	autoHeight: true,
+	padding: 5,
+	items: [
+		{
+			xtype: 'label',
+			id: 'num_of_nodes_in_query',
+			name: 'numberOfNodesInQuery',
+			fieldLabel: 'Nodes',
+			text: '-'
+		},
+		{
+			xtype: 'label',
+			id: 'num_of_edges_in_query',
+			name: 'numberOfEdgesInQuery',
+			fieldLabel: 'Edges',
+			text: '-'
+		}		
+	],
+	listeners: {
+		render: function() {
+			var query_result_handler = function(d) {
+				Ext.getCmp('num_of_nodes_in_query').setText(d.data.numberOfNodes);
+				Ext.getCmp('num_of_edges_in_query').setText(d.data.numberOfEdges);
+			}
+			
+			org.systemsbiology.hukilau.apis.events.MessageBus.on('query_result_available', query_result_handler, this);
+		}
+		
+	}
+});
+
+org.systemsbiology.hukilau.apis.panels.FilterResultInfo = new Ext.Panel({
+	id: 'filter_result_panel',
+	title: 'Filter Result',
+	layout: 'form',
+	autoHeight: true,
+	padding: 5,
+	items: [
+		{
+			xtype: 'label',
+			id: 'num_of_filtered_nodes',
+			name: 'numberOfFilteredNodes',
+			fieldLabel: 'Nodes',
+			text: '-'
+		},
+		{
+			xtype: 'label',
+			id: 'num_of_filtered_edges',
+			name: 'numberOfFilteredEdges',
+			fieldLabel: 'Edges',
+			text: '-'
+		}		
+	],
+	listeners: {
+		render: function() {
+			var filtered_graph_handler = function(d) {
+				Ext.getCmp('num_of_filtered_nodes').setText(d.data.numberOfNodes);
+				Ext.getCmp('num_of_filtered_edges').setText(d.data.numberOfEdges);
+			}
+			
+			org.systemsbiology.hukilau.apis.events.MessageBus.on('filtered_graph_available', filtered_graph_handler, this);
+		}
+		
+	}
+});
+

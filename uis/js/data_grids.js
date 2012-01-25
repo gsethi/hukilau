@@ -50,23 +50,6 @@ org.systemsbiology.hukilau.apis.panels.createPropStore = function(grid_id) {
     return ds;
 };
 
-org.systemsbiology.hukilau.apis.panels.nodePropContextMenu = new Ext.menu.Menu({
-    items: [
-        {
-            text: 'Add nodes'
-        },
-        {
-            text: 'Add nodes with first neighbors'
-        }
-    ],
-    listeners: {
-    	itemclick: function(item) {
-    		console.log("nodepropclick");
-    		console.log(items);
-		}
-	}
-});
-
 org.systemsbiology.hukilau.apis.panels.nodePropGridPanel = new Ext.grid.GridPanel({
 	id: 'node_prop_grid',
     name: 'node_prop_grid',
@@ -83,16 +66,9 @@ org.systemsbiology.hukilau.apis.panels.nodePropGridPanel = new Ext.grid.GridPane
     		text: "Add Nodes",
     		handler: function() {
     			var gm = org.systemsbiology.hukilau.components.GraphManager;
-    			var uris = [];
 
     			rows = Ext.getCmp('node_prop_grid').getSelectionModel().getSelections();
-    			var n = rows.length;
-    			for (var i = 0; i < n; i++) {
-    				uris.push(rows[i].data.uri);
-    			}
-
-    			gm.addNodes(uris);
-    			//org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('add_nodes_to_graph', rows);
+    			gm.addNodes(rows);
     		}
     	}
     ]
@@ -116,27 +92,39 @@ org.systemsbiology.hukilau.apis.panels.edgePropGridPanel = new Ext.grid.GridPane
     	{
     		text: "Add Edges",
     		handler: function() {
-    			var qh = org.systemsbiology.hukilau.components.QueryHandler;
+    			//var qh = org.systemsbiology.hukilau.components.QueryHandler;
     			var gm = org.systemsbiology.hukilau.components.GraphManager;
-    			var uris = [];
+    			var node_uris = {};    			
 
     			rows = Ext.getCmp('edge_prop_grid').getSelectionModel().getSelections();
     			var n = rows.length;
     			for (var i = 0; i < n; i++) {
-    				uris.push(rows[i].data.uri);
+    				var edge_data = rows[i].data;
+    				node_uris[edge_data.source] = true;
+    				node_uris[edge_data.target] = true;
     			}
 
-    			gm.addEdges(uris);
+    			// Build a filter function for finding the source and target node rows for each edge
+    			var filter_fn = function(record, id) {
+    				if (node_uris.hasOwnProperty(record.data.uri)) {
+    					return true;
+    				}
+    				else {
+    					return false;
+    				}
+    			};
 
-    			//org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('add_edges_to_graph', rows);
+    			var node_grid = Ext.getCmp('node_prop_grid');
+    			var node_rows = node_grid.getStore().queryBy(filter_fn);
+    			gm.addNodes(node_rows.items);
+    			gm.addEdges(rows);
     		}
     	}
     ]
 });
 
-org.systemsbiology.hukilau.apis.panels.showGridPanels = function() {
-	var qh = org.systemsbiology.hukilau.components.QueryHandler;
-	var current_data = qh.getCurrentData();
+org.systemsbiology.hukilau.apis.panels.showGridPanels = function(query_result) {
+	var current_data = query_result.data;
 
 	var copy_metadata = function(p_array) {
 		var meta = [];
@@ -150,7 +138,18 @@ org.systemsbiology.hukilau.apis.panels.showGridPanels = function() {
 		}
 
 		return meta;
-	}
+	};
+
+	var map_field = function(p_array, key) {
+		var map = {};
+		var n = p_array.length;
+
+		for (var i = 0; i < n; i++) {
+			map[p_array[i][key]] = p_array[i];
+		}
+
+		return map;
+	};
 
 	var find_field_indices = function(p_array) {
 		var field_map = {};
@@ -161,18 +160,7 @@ org.systemsbiology.hukilau.apis.panels.showGridPanels = function() {
 		}
 
 		return field_map;
-	}
-
-	// var get_uri_to_label_map = function(p_array) {
-	// 	var label_map = {};
-	// 	var n = p_array.length;
-
-	// 	for (var i = 0; i < n; i++) {
-	// 		label_map[p_array[i].uri] = p_array[i].label;
-	// 	}
-
-	// 	return label_map;
-	// }
+	};
 
 	var hide_fields = function(meta, fields, name_to_index_map) {
 		var n = fields.length;
@@ -184,11 +172,10 @@ org.systemsbiology.hukilau.apis.panels.showGridPanels = function() {
 		}
 	};
 
-	// var node_schema = copy_metadata(d.dataSchema.nodes);
-	var node_schema = copy_metadata(qh.getCurrentDataSchema().nodes);
+	var node_schema = query_result.dataSchema.nodes;
 	hide_fields(node_schema, ['name', 'label', 'id', 'uri'], find_field_indices(node_schema));
 	var node_data = {
-		rows: current_data.node_array,
+		rows: current_data.nodes,
 		metaData: {
 			fields: node_schema,
 			root: 'rows'
@@ -199,8 +186,7 @@ org.systemsbiology.hukilau.apis.panels.showGridPanels = function() {
 	this.nodePropGridPanel.enable();
 	this.nodePropGridPanel.store.loadData(node_data);
 
-	//var edge_schema = copy_metadata(d.dataSchema.edges);
-	var edge_schema = copy_metadata(qh.getCurrentDataSchema().edges);
+	var edge_schema = query_result.dataSchema.edges;
 	edge_fields = find_field_indices(edge_schema);
 	hide_fields(edge_schema, ['name', 'label', 'id', 'uri', 'source', 'target'], edge_fields);
 
@@ -216,15 +202,16 @@ org.systemsbiology.hukilau.apis.panels.showGridPanels = function() {
 		dataIndex: "target_label"
 	});
 	
-	var n = current_data.edge_array.length;
+	var nodes_by_uri = map_field(current_data.nodes, 'uri');
+	var n = current_data.edges.length;
 	for (var i = 0; i < n; i++) {
-		var edge = current_data.edge_array[i];
-		edge.source_label = current_data.nodes[edge.source].label;
-		edge.target_label = current_data.nodes[edge.target].label;
+		var edge = current_data.edges[i];
+		edge.source_label = nodes_by_uri[edge.source].label;
+		edge.target_label = nodes_by_uri[edge.target].label;
 	}
 	
 	var edge_data = {
-		rows: current_data.edge_array,
+		rows: current_data.edges,
 		metaData: {
 			fields: edge_schema,
 			root: 'rows'
