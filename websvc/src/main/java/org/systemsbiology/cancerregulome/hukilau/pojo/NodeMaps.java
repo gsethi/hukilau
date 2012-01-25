@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * @author hrovira
- * TODO: need to load into db different datatypes for properties and then retrieve them here appropriately
+ *         TODO: need to load into db different datatypes for properties and then retrieve them here appropriately
  */
 public class NodeMaps {
     private final Map<Long, Node> nodesById = new HashMap<Long, Node>();
@@ -34,16 +34,18 @@ public class NodeMaps {
     public void addNode(Node node) {
         this.nodesById.put(node.getId(), node);
         for (String propKey : node.getPropertyKeys()) {
-            // TODO: Specify actual property types
-            this.nodeProperties.put(propKey, "string");
+            if (!this.nodeProperties.containsKey(propKey)) {
+                this.nodeProperties.put(propKey, getDataType(node.getProperty(propKey)));
+            }
         }
     }
 
     public void addRelationship(Relationship relationship) {
         this.relationshipsById.put(relationship.getId(), relationship);
         for (String propKey : relationship.getPropertyKeys()) {
-            // TODO: Specify actual property types
-            this.relationshipProperties.put(propKey, "string");
+            if (!this.relationshipProperties.containsKey(propKey)) {
+                this.relationshipProperties.put(propKey, getDataType(relationship.getProperty(propKey)));
+            }
         }
     }
 
@@ -73,6 +75,16 @@ public class NodeMaps {
                 relationshipsById.remove(r.getId());
             }
         }
+    }
+
+    /*
+     * Private Methods
+     */
+    private String getDataType(Object obj) {
+        if (obj instanceof Double) return "number";
+        if (obj instanceof Integer) return "int";
+        if (obj instanceof Boolean) return "boolean";
+        return "string";
     }
 
 }
