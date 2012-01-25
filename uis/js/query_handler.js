@@ -19,8 +19,11 @@ var QueryHandler = Ext.extend(Object, {
             url: uri,
             success: function(o) {
                 var json = Ext.util.JSON.decode(o.responseText);
-                org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_dataschema_available', json.dataSchema);
-                org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('query_result_available', json);
+                
+                if (json.data.numberOfEdges > 0 || json.data.numberOfNodes > 0) {
+                	org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_dataschema_available', json.dataSchema);
+                	org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('query_result_available', json);
+                }
             },
             failure: function(o) {
                 console.log('Query failed:');
