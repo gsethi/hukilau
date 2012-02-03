@@ -30,12 +30,13 @@ Ext.onReady(function() {
 		contentEl: 'c_vis'
 	};
 
+  var ajaxMonitor = new org.systemsbiology.addama.js.widgets.AjaxMonitor();
 	var dataDisplayPanel = new Ext.TabPanel({
 		region: 'center',
 		id: 'data_display_panel',
 		activeTab: 0,
 		items: [
-			graphDisplayPanel
+			graphDisplayPanel,  ajaxMonitor.gridPanel
 		]
 	});
 
