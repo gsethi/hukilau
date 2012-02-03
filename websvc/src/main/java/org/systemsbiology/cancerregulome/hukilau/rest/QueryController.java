@@ -20,6 +20,7 @@ import org.systemsbiology.addama.commons.web.views.JsonView;
 import org.systemsbiology.addama.jsonconfig.ServiceConfig;
 import org.systemsbiology.addama.jsonconfig.impls.StringPropertyByIdMappingsHandler;
 import org.systemsbiology.cancerregulome.hukilau.configs.Neo4jGraphDbMappingsHandler;
+import org.systemsbiology.cancerregulome.hukilau.configs.NetworkMetadataMappingsHandler;
 import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
 import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
 
@@ -45,6 +46,7 @@ public class QueryController implements InitializingBean {
     private final Map<String, AbstractGraphDatabase> graphDbsById = new HashMap<String, AbstractGraphDatabase>();
     private final Map<String, String> labelsById = new HashMap<String, String>();
     private final Map<String, String> nodeIdxById = new HashMap<String, String>();
+    private final Map<String, JSONObject> networkMetadataById = new HashMap<String, JSONObject>();
 
     private ServiceConfig serviceConfig;
 
@@ -56,6 +58,7 @@ public class QueryController implements InitializingBean {
         this.serviceConfig.visit(new Neo4jGraphDbMappingsHandler(graphDbsById));
         this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsById, "label"));
         this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(nodeIdxById, "nodeIdx"));
+        this.serviceConfig.visit(new NetworkMetadataMappingsHandler(networkMetadataById));
     }
 
     /*
@@ -85,21 +88,11 @@ public class QueryController implements InitializingBean {
         String uri = substringAfterLast(request.getRequestURI(), request.getContextPath());
         log.info("graphDbId=" + graphDbId);
 
-//        AbstractGraphDatabase graphDb = getGraphDb(graphDbId);
-//        IndexManager indexMgr = graphDb.index("generalIdx");
-
         JSONObject json = new JSONObject();
         json.put("uri", uri);
         json.put("id", graphDbId);
         json.put("name", graphDbId);
         json.put("label", labelsById.get(graphDbId));
-
-        // TODO : Need to add node types, edge types, and property data types to the response
-//            json.append("nodeTypes", new JSONObject().put("name", niName).put("uri", uri + "/nodeTypes/" + niName));
-//        addNumberOf(json, "nodeTypes");
-
-//            json.append("edgeTypes", new JSONObject().put("name", riName).put("uri", uri + "/edgeTypes/" + riName));
-//        addNumberOf(json, "edgeTypes");
 
         JSONObject dataSchema = new JSONObject();
         dataSchema.put("nodes", new JSONArray());
@@ -107,6 +100,17 @@ public class QueryController implements InitializingBean {
         json.put("dataSchema", dataSchema);
 
         return new ModelAndView(new JsonView()).addObject("json", json);
+    }
+
+    @RequestMapping(value = "/**/graphs/{graphDbId}/metadata", method = RequestMethod.GET)
+    protected ModelAndView networkMetadata(@PathVariable("graphDbId") String graphDbId) throws Exception {
+        log.info("graphDbId=" + graphDbId);
+
+        if (!networkMetadataById.containsKey(graphDbId)) {
+            throw new ResourceNotFoundException(graphDbId);
+        }
+
+        return new ModelAndView(new JsonView()).addObject("json", networkMetadataById.get(graphDbId));
     }
 
     @RequestMapping(value = "/**/graphs/{graphDbId}/nodes/{nodeId}", method = RequestMethod.GET)

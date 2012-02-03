@@ -1,0 +1,39 @@
+{
+    numberOfNodes: 0,
+    numberOfEdges: 0,
+    nodeTypes: [
+        {
+            name: "genes",
+            items: [
+                {"name":"id","type":"string"},
+                {"name":"label","type":"string"},
+                {"name":"uri","type":"string"},
+                {"name":"name","type":"string"},
+                {"name":"probe_id","type":"string"},
+                {"name":"gene_symbol","type":"string"},
+                {"name":"predictability","type":"string"},
+                {"name":"nodeType","type":"string"},
+                {"name":"period","type":"string"},
+                {"name":"amp","type":"string"},
+                {"name":"phase","type":"string"},
+                {"name":"ens_id","type":"string"}
+            ]
+        }
+    ],
+    edgeTypes: [
+        {
+            name: "couplings",
+            items: [
+                {"name":"source","type":"string"},
+                {"name":"target","type":"string"},
+                {"name":"id","type":"string"},
+                {"name":"label","type":"string"},
+                {"name":"uri","type":"string"},
+                {"name":"name","type":"string"},
+                {"name":"p-value","type":"string"},
+                {"name":"coefficent","type":"string"},
+                {"name":"impact","type":"string"}
+            ]
+        }
+    ]
+}

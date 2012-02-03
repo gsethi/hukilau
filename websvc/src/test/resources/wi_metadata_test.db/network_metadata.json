@@ -1,0 +1,30 @@
+{
+    numberOfNodes: 100,
+    numberOfEdges: 1000,
+    nodeTypes: [
+        {
+            name: "genes",
+            items: [
+                {"name":"id","type":"string"},
+                {"name":"label","type":"string"},
+                {"name":"uri","type":"string"},
+                {"name":"name","type":"string"},
+                {"name":"gene_symbol","type":"string"}
+            ]
+        }
+    ],
+    edgeTypes: [
+        {
+            name: "couplings",
+            items: [
+                {"name":"source","type":"string"},
+                {"name":"target","type":"string"},
+                {"name":"id","type":"string"},
+                {"name":"label","type":"string"},
+                {"name":"uri","type":"string"},
+                {"name":"name","type":"string"},
+                {"name":"coefficent","type":"string"}
+            ]
+        }
+    ]
+}
