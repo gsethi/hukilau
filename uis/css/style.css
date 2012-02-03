@@ -7,3 +7,13 @@ p.graph_error {
 	font: arial;
 	fontsize: 120%;
 }
+
+.query_error {
+	font-family: tahoma,arial,verdana,sans-serif;
+	font-size: 15px;
+	letter-spacing: 1px;
+	top: 50%;
+	width: 100%;
+	position: absolute;
+	text-align: center;
+}
