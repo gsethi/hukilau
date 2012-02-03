@@ -22,7 +22,6 @@ var GraphManager = Ext.extend(Object, {
             var edge = edge_rows[i].data;
 
             if ( !this.graph.edges.hasOwnProperty(edge.uri) ) {
-                this.addNo
                 this.graph.edges[edge.uri] = edge;
             }
         }

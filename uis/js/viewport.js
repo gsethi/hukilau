@@ -30,23 +30,17 @@ Ext.onReady(function() {
 		contentEl: 'c_vis'
 	};
 
-	var queryResultPanel = {
-		title: 'Query Result',
-		layout: 'border',
-		items: [
-			org.systemsbiology.hukilau.apis.panels.nodePropGridPanel,
-			org.systemsbiology.hukilau.apis.panels.edgePropGridPanel
-		]
-	};
-
 	var dataDisplayPanel = new Ext.TabPanel({
 		region: 'center',
 		id: 'data_display_panel',
 		activeTab: 0,
 		items: [
-			graphDisplayPanel,
-			queryResultPanel
+			graphDisplayPanel
 		]
+	});
+
+	new org.systemsbiology.hukilau.components.QueryHandler({
+		tab_container: dataDisplayPanel
 	});
 
 	new org.systemsbiology.addama.js.TopBar({contentEl: "c_addama_topbar"});

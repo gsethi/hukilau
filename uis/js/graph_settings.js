@@ -2,7 +2,6 @@ Ext.ns('org.systemsbiology.hukilau.apis.panels');
 
 org.systemsbiology.hukilau.apis.panels.GraphDatabaseSelect = new Ext.Panel({
     id: 'graph_settings_panel',
-    name: 'graph_settings_panel',
     title: 'Graph Database',
     autoHeight: true,
     width: 300,
@@ -220,7 +219,6 @@ org.systemsbiology.hukilau.apis.panels.NodeQuery = new Ext.Panel({
 });
 
 org.systemsbiology.hukilau.apis.panels.QueryResultInfo = new Ext.Panel({
-	id: 'query_result_panel',
 	title: 'Query Result',
 	layout: 'form',
 	autoHeight: true,
