@@ -1,11 +1,10 @@
 package org.systemsbiology.cancerregulome.hukilau.utils;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.core.io.ClassPathResource;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 
 /**
  * @author hrovira
@@ -17,9 +16,15 @@ public class GraphDBConfiguration {
 
     public static JSONObject loadConfiguration(String configFile) throws Exception {
         ClassPathResource resource = new ClassPathResource(configFile);
-        InputStream inputStream = resource.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        return jsonFromInputStream(resource.getInputStream());
+    }
 
+    public static JSONObject loadFromPath(String path) throws Exception {
+        return jsonFromInputStream(new FileInputStream(path));
+    }
+
+    private static JSONObject jsonFromInputStream(InputStream inputStream) throws IOException, JSONException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder builder = new StringBuilder();
         String line = "";
         while (line != null) {
