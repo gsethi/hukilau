@@ -83,10 +83,30 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		    	{
 		    		text: "Add Nodes",
 		    		handler: function() {
-		    			var gm = org.systemsbiology.hukilau.components.GraphManager;
+		    			node_rows = that.node_grid.getSelectionModel().getSelections();
+		    			var nodes = {};
 
-		    			rows = that.node_grid.getSelectionModel().getSelections();
-		    			gm.addNodes(rows);
+		    			Ext.each(node_rows, function(row) {
+	    					nodes[row.data.id] = true;
+		    			});
+
+		    			var filter_fn = function(record, id) {
+		    				var source = record.data.source;
+		    				var target = record.data.target;
+
+		    				if (nodes.hasOwnProperty(source) && nodes.hasOwnProperty(target)) {
+		    					return true;
+		    				}
+		    				else {
+		    					return false;
+		    				}
+		    			};
+
+		    			var edge_rows = that.edge_grid.getStore().queryBy(filter_fn);
+
+		    			var gm = org.systemsbiology.hukilau.components.GraphManager;
+		    			gm.addNodes(node_rows);
+		    			gm.addEdges(edge_rows.items);
 		    		}
 		    	}
 		    ]
@@ -123,19 +143,17 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		    		text: "Add Edges",
 		    		handler: function() {
 		    			var gm = org.systemsbiology.hukilau.components.GraphManager;
-		    			var node_uris = {};    			
+		    			var nodes = {};
 
-		    			var rows = that.edge_grid.getSelectionModel().getSelections();
-		    			var n = rows.length;
-		    			for (var i = 0; i < n; i++) {
-		    				var edge_data = rows[i].data;
-		    				node_uris[edge_data.source] = true;
-		    				node_uris[edge_data.target] = true;
-		    			}
+		    			var edge_rows = that.edge_grid.getSelectionModel().getSelections();
+		    			Ext.each(edge_rows, function(row) {
+		    				nodes[row.data.source] = true;
+		    				nodes[row.data.target] = true;
+		    			});
 
 		    			// Build a filter function for finding the source and target node rows for each edge
 		    			var filter_fn = function(record, id) {
-		    				if (node_uris.hasOwnProperty(record.data.uri)) {
+		    				if (nodes.hasOwnProperty(record.data.id)) {
 		    					return true;
 		    				}
 		    				else {
@@ -145,7 +163,7 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 
 		    			var node_rows = that.node_grid.getStore().queryBy(filter_fn);
 		    			gm.addNodes(node_rows.items);
-		    			gm.addEdges(rows);
+		    			gm.addEdges(edge_rows);
 		    		}
 		    	}
 		    ]
