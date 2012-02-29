@@ -21,27 +21,44 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		this.container_title = config.container_title === undefined ? "Query Result" : config.container_title;
 
 		var that = this;
-		var uri = config.uri;
+		var request_config = config.request;
 		
-        Ext.Ajax.request({
-	        method: "get",
-	        url: uri,
-	        success: function(o) {
-	            var json = Ext.util.JSON.decode(o.responseText);
+		var success_fn = function(o) {
+            var json = Ext.util.JSON.decode(o.responseText);
 
-	            if (json.data.numberOfEdges > 0 || json.data.numberOfNodes > 0) {
-	            	org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_dataschema_available', json.dataSchema);
+            if (json.data.numberOfEdges > 0 || json.data.numberOfNodes > 0) {
+            	org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_dataschema_available', json.dataSchema);
 
-	                that.create_grids(json);
-	            }
-	            else {
-	            	that.show_error("Query result is empty");
-	            }
-	        },
-	        failure: function(o) {
-	            that.show_Error("Query failed")
-	        }
-		});
+                this.create_grids(json);
+            }
+            else {
+            	this.show_error("Query result is empty");
+            }			
+		};
+
+		var failure_fn = function(o) {
+            this.show_error("Query failed")
+        };
+
+		if (request_config.method == 'get') {
+	        Ext.Ajax.request({
+		        method: 'get',
+		        url: request_config.uri,
+		        scope: this,
+		        success: success_fn,
+		        failure: failure_fn
+			});
+    	}
+    	else if (request_config.method == 'post') {
+	        Ext.Ajax.request({
+		        method: 'post',
+		        url: request_config.uri,
+		        params: Ext.encode(request_config.params),
+		        scope: this,
+		        success: success_fn,
+		        failure: failure_fn
+	        });
+    	}
 	},
 
 	show_error: function(error_msg) {
