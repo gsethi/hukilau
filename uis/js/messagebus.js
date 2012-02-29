@@ -8,6 +8,7 @@ org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('graph_metadata_load
 
 // Queries
 org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('node_query_submitted');
+org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('filter_query_submitted');
 org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('query_result_available');
 org.systemsbiology.hukilau.apis.events.MessageBus.addEvents('graph_dataschema_available');
 

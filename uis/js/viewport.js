@@ -1,27 +1,28 @@
 Ext.onReady(function() {
 	var graphQueryTabs = new Ext.TabPanel({
-		activeTab: 0,
-		items: [
-			org.systemsbiology.hukilau.apis.panels.NodeQuery
-		]
+		// id: 'graph_query_tabs',
+		// activeTab: 0,
+		// items: [
+		 	// org.systemsbiology.hukilau.apis.panels.NodeQuery
+		// ]
+	});
+
+	var graphDBSelect = new org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect({
+		query_tab_panel: graphQueryTabs
 	});
 
 	var graphControlPanel = {
 		xtype: 'panel',
 		id: 'graph_control_panel',
 		region: 'west',
-		contentEl: 'c_graph_control',
 		width: 300,
 		layout: 'auto',
 		layoutConfig: {
 			align: 'top'
 		},
 		items: [
-			org.systemsbiology.hukilau.apis.panels.GraphDatabaseSelect,
-			graphQueryTabs,
-			org.systemsbiology.hukilau.apis.panels.QueryResultInfo,
-			org.systemsbiology.hukilau.apis.panels.NodeSchemaSettings,
-			org.systemsbiology.hukilau.apis.panels.EdgeSchemaSettings
+			graphDBSelect.getPanel(),
+			graphQueryTabs
 		]
 	};
 
@@ -30,9 +31,10 @@ Ext.onReady(function() {
 		contentEl: 'c_vis'
 	};
 
-  var ajaxMonitor = new org.systemsbiology.addama.js.widgets.AjaxMonitor();
+    var ajaxMonitor = new org.systemsbiology.addama.js.widgets.AjaxMonitor();
+
 	var dataDisplayPanel = new Ext.TabPanel({
-		region: 'center',
+		region: 'center',	
 		id: 'data_display_panel',
 		activeTab: 0,
 		items: [
