@@ -1,10 +1,6 @@
 Ext.onReady(function() {
 	var graphQueryTabs = new Ext.TabPanel({
-		// id: 'graph_query_tabs',
-		// activeTab: 0,
-		// items: [
-		 	// org.systemsbiology.hukilau.apis.panels.NodeQuery
-		// ]
+
 	});
 
 	var graphDBSelect = new org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect({

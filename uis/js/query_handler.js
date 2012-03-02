@@ -35,7 +35,7 @@ org.systemsbiology.hukilau.components.QueryHandler = Ext.extend(Object, {
                 method: 'post',
                 uri: params.uri,
                 params: {
-                    filter_list: params.filters
+                    filter_config: Ext.encode(params.filters)
                 }
             }
         });

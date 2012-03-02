@@ -32,20 +32,20 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
 
     	stack.getTopToolbar().insertButton(0, {
     		text: "Clear",
-    		scope: stack,
+    		scope: this,
 			handler: function() {
-				this.removeAll();
-				this.add(new org.systemsbiology.hukilau.components.queries.NumericRangeFilter(this.data_schema));
-				this.doLayout();
+				stack.removeAll();
+				stack.add(new org.systemsbiology.hukilau.components.queries.NumericRangeFilter(this.data_schema));
+				stack.doLayout();
 			}
     	});
 
     	stack.getBottomToolbar().insertButton(0, {
      		text: "Add filter",
-    		scope: stack,
+    		scope: this,
     		handler: function() {
-    			this.add(new org.systemsbiology.hukilau.components.queries.NumericRangeFilter(this.data_schema));
-    			this.doLayout();
+    			stack.add(new org.systemsbiology.hukilau.components.queries.NumericRangeFilter(this.data_schema));
+    			stack.doLayout();
     		}
     	});
 
@@ -68,16 +68,23 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
 				return;
     		}
 
-	    	var filters = [];
+	    	var node_filters = [];
+
 	    	Ext.each(stack.items, function(item, index, allItems) {
-	    		filters.push(allItems.itemAt(index).getFilter());
+	    		filter = allItems.itemAt(index).getFilter();
+	    		if (filter.object == "nodes") {
+	    			node_filters.push(filter);
+	    		}
 	    	});
 
 			var query_uri = this.graph_uri + '/filter';
 
 	    	org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('filter_query_submitted', {
 	    		uri: query_uri,
-	    		filters: filters
+	    		filters: {
+	    			nodes: node_filters,
+	    			edges: []
+	    		}
 	    	});
     	};
 
