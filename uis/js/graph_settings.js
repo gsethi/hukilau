@@ -41,7 +41,7 @@ org.systemsbiology.hukilau.apis.panels.GraphDatabaseSelect = new Ext.Panel({
         				});
         				
 						var graph_name = value.data.uri.split('graphs/')[1];
-						var meta_uri = '/addama/workspaces/fileshare/graphs/' + graph_name + '/metadata.json';
+						var meta_uri = '/addama/graphs/' + graph_name + '/metadata';
         				
         				Ext.Ajax.request({
 		                    method: "get",
@@ -157,10 +157,10 @@ org.systemsbiology.hukilau.apis.panels.NodeQuery = new Ext.Panel({
 			value: '2',
 			store: new Ext.data.JsonStore({
 				fields: ['label', 'value'],
-				data: [ {label: '2 nodes', value: 2},
+				data: [ {label: '1 node', value: 1},
+						{label: '2 nodes', value: 2},
 						{label: '3 nodes', value: 3},
-						{label: '4 nodes', value: 4},
-						{label: '5 nodes', value: 5} ]
+						{label: '4 nodes', value: 4} ]
 			})
 		}
 	],
