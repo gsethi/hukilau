@@ -50,10 +50,11 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 			});
     	}
     	else if (request_config.method == 'post') {
+    		console.log(request_config.params);
 	        Ext.Ajax.request({
 		        method: 'post',
 		        url: request_config.uri,
-		        params: Ext.encode(request_config.params),
+		        params: request_config.params,
 		        scope: this,
 		        success: success_fn,
 		        failure: failure_fn
