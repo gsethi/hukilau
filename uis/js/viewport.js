@@ -22,22 +22,24 @@ Ext.onReady(function() {
 		]
 	};
 
-	var graphDisplayPanel = {
-		title: "Graph",
-		contentEl: 'c_vis'
-	};
+	var graphDisplay = new org.systemsbiology.hukilau.components.GraphDisplay({
+		cytoscape_content_el: 'c_vis'
+	});
 
     var ajaxMonitor = new org.systemsbiology.addama.js.widgets.AjaxMonitor();
-
+    
 	var dataDisplayPanel = new Ext.TabPanel({
 		region: 'center',	
 		id: 'data_display_panel',
 		activeTab: 0,
 		items: [
-			graphDisplayPanel,  ajaxMonitor.gridPanel
+			graphDisplay.getPanel(),
+			ajaxMonitor.gridPanel
 		]
 	});
 
+	graphDisplay.initCytoscape();
+	
 	new org.systemsbiology.hukilau.components.QueryHandler({
 		tab_container: dataDisplayPanel
 	});

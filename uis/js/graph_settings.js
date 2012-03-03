@@ -51,6 +51,7 @@ org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect = Ext.extend(O
 
     	this.graphDBCombo = new Ext.form.ComboBox({
 			fieldLabel: 'Graph',
+			id: 'graph_database_combo',
 			mode: 'remote',
 			emptyText: 'Select database',
 			autoWidth: true,
@@ -79,6 +80,7 @@ org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect = Ext.extend(O
         				});
         				
 						var graph_name = value.data.uri.split('graphs/')[1];
+
         				var meta_uri = '/addama/graphs/' + graph_name + '/metadata';
 
         				Ext.Ajax.request({
@@ -239,7 +241,8 @@ org.systemsbiology.hukilau.components.queries.NodeQuery = Ext.extend(Ext.Panel, 
 					{label: '1 node', value: 1},
 					{label: '2 nodes', value: 2},
 					{label: '3 nodes', value: 3},
-					{label: '4 nodes', value: 4} ]
+					{label: '4 nodes', value: 4}
+				]
 			})
 		});
 
