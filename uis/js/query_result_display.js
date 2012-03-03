@@ -50,7 +50,6 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 			});
     	}
     	else if (request_config.method == 'post') {
-    		console.log(request_config.params);
 	        Ext.Ajax.request({
 		        method: 'post',
 		        url: request_config.uri,
@@ -122,9 +121,11 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 
 		    			var edge_rows = that.edge_grid.getStore().queryBy(filter_fn);
 
-		    			var gm = org.systemsbiology.hukilau.components.GraphManager;
-		    			gm.addNodes(node_rows);
-		    			gm.addEdges(edge_rows.items);
+		    			org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('add_elements_to_graph', {
+		    				graph_uri: Ext.getCmp('graph_database_combo').getValue(),
+		    				node_rows: node_rows,
+		    				edge_rows: edge_rows.items
+		    			});	
 		    		}
 		    	}
 		    ]
@@ -160,7 +161,6 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		    	{
 		    		text: "Add Edges",
 		    		handler: function() {
-		    			var gm = org.systemsbiology.hukilau.components.GraphManager;
 		    			var nodes = {};
 
 		    			var edge_rows = that.edge_grid.getSelectionModel().getSelections();
@@ -180,8 +180,12 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		    			};
 
 		    			var node_rows = that.node_grid.getStore().queryBy(filter_fn);
-		    			gm.addNodes(node_rows.items);
-		    			gm.addEdges(edge_rows);
+
+		    			org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('add_elements_to_graph', {
+		    				graph_uri: Ext.getCmp('graph_database_combo').getValue(),
+		    				node_rows: node_rows.items,
+		    				edge_rows: edge_rows
+		    			});
 		    		}
 		    	}
 		    ]
@@ -275,7 +279,7 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		}
 	},
 
-	create_node_columns: function(schema) {		
+	create_node_columns: function(schema) {
 		return this.build_column_model(schema);
 	},
 
