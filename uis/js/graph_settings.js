@@ -74,11 +74,8 @@ org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect = Ext.extend(O
         		select: {
         			scope: this,
         			fn: function(combo, value) {
-        				org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_db_selected', {
-        					label: value.data.label,
-        					uri: value.data.uri
-        				});
-        				
+        				org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_db_selected', value.data);
+
 						var graph_name = value.data.uri.split('graphs/')[1];
 
         				var meta_uri = '/addama/graphs/' + graph_name + '/metadata';
@@ -234,7 +231,7 @@ org.systemsbiology.hukilau.components.queries.NodeQuery = Ext.extend(Ext.Panel, 
 			triggerAction: 'all',
 			displayField: 'label',
 			valueField: 'value',
-			value: '2',
+			value: '1',
 			store: new Ext.data.JsonStore({
 				fields: ['label', 'value'],
 				data: [
