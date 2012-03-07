@@ -12,16 +12,11 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 	container_title: undefined,
 
 	constructor: function(config) {
-		if (config.parent_container === undefined) {
-			console.log("Error: Parent container for query result is not defined.")
-			return;
-		}
+        Ext.apply(this, config, {
+            container_title: "Query Result"
+        });
 
-		this.parent_container = config.parent_container;
-		this.container_title = config.container_title === undefined ? "Query Result" : config.container_title;
-
-		var that = this;
-		var request_config = config.request;
+        var request_config = config.request;
 		
 		var success_fn = function(o) {
             var json = Ext.util.JSON.decode(o.responseText);
@@ -36,7 +31,7 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
             }			
 		};
 
-		var failure_fn = function(o) {
+        var failure_fn = function () {
             this.show_error("Query failed")
         };
 
@@ -65,8 +60,8 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		var error_panel = new Ext.Panel({
 			title: this.container_title,
 			html: '<div class="query_error">' + error_msg + '</div>',
-			closable: true,			
-		});
+			closable: true
+        });
 
 		this.parent_container.add(error_panel);
 		this.parent_container.activate(error_panel);
@@ -100,23 +95,18 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		    	{
 		    		text: "Add Nodes",
 		    		handler: function() {
-		    			node_rows = that.node_grid.getSelectionModel().getSelections();
+                        var node_rows = that.node_grid.getSelectionModel().getSelections();
 		    			var nodes = {};
 
 		    			Ext.each(node_rows, function(row) {
 	    					nodes[row.data.id] = true;
 		    			});
 
-		    			var filter_fn = function(record, id) {
-		    				var source = record.data.source;
+                        var filter_fn = function (record) {
+                            var source = record.data.source;
 		    				var target = record.data.target;
 
-		    				if (nodes.hasOwnProperty(source) && nodes.hasOwnProperty(target)) {
-		    					return true;
-		    				}
-		    				else {
-		    					return false;
-		    				}
+		    				return nodes.hasOwnProperty(source) && nodes.hasOwnProperty(target);
 		    			};
 
 		    			var edge_rows = that.edge_grid.getStore().queryBy(filter_fn);
@@ -150,8 +140,7 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		    region: 'south',
 		    split: true,
 		    height: 300,
-		    minSize: 300,
-		    autoScroll: true,
+            autoScroll: true,
 		    autoWidth: true,
 		    loadMask: true,
 		    disabled: false,
@@ -170,13 +159,8 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		    			});
 
 		    			// Build a filter function for finding the source and target node rows for each edge
-		    			var filter_fn = function(record, id) {
-		    				if (nodes.hasOwnProperty(record.data.id)) {
-		    					return true;
-		    				}
-		    				else {
-		    					return false;
-		    				}
+                        var filter_fn = function (record) {
+                            return nodes.hasOwnProperty(record.data.id);
 		    			};
 
 		    			var node_rows = that.node_grid.getStore().queryBy(filter_fn);
@@ -205,15 +189,7 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		this.parent_container.activate(this.grid_container);
     },
 
-    get_node_grid: function() {
-    	return this.node_grid;
-    },
-
-    get_edge_grid: function() {
-    	return this.edge_grid;
-    },
-
-	build_column_model: function(meta_data) {
+    build_column_model: function(meta_data) {
 		var columns = [];
 
         for (var i = 0; i < meta_data.length; i++ ) {
