@@ -8,7 +8,7 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
     width: undefined,
     height: undefined,
     layout_name: undefined,
-    style_objects: undefined,
+    style_objects: {},
 
     cytoscape_options: {
         renderer: {
@@ -26,8 +26,7 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
 
                 "node": {
                     labelText: {
-                        defaultValue: "",
-                        passthroughMapper: "gene_symbol"
+                        defaultValue: ""
                     },
                     shape: "ellipse",
                     height: 10,
@@ -46,26 +45,25 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
     },
 
     constructor: function(config) {
-        var that = this;
-
-        this.cytoscape_content_el = config.cytoscape_content_el;
-        this.container_title = config.container_title === undefined ? "Graph" : config.container_title;
-
-        this.width = config.width === undefined ? 700 : config.width;
-        this.height = config.height === undefined ? 700 : config.height;
-
-        this.layout_name = config.layout === undefined ? "grid" : config.layout;
-        this.style_objects = {};
+        Ext.apply(this, config, {
+            container_title: "Graph",
+            width: 700,
+            height: 700,
+            layout_name: "grid"
+        });
 
         this.graph_panel = new Ext.Panel({
             title: this.container_title,
             contentEl: this.cytoscape_content_el,
             listeners: {
-                activate: function() {
-                    if (that.cy !== undefined) {
-                        that.cy.layout({
-                            name: that.layout_name
-                        });
+                activate: {
+                    scope: this,
+                    fn: function() {
+                        if (this.cy !== undefined) {
+                            this.cy.layout({
+                                name: this.layout_name
+                            });
+                        }
                     }
                 }
             },
@@ -145,14 +143,15 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
     },
 
     handleGraphDBChange: function(params) {
-        var graph_id = params.uri.split('graphs/')[1];
-        var style;
-        
+        var graph_id;
+
+        graph_id = params.uri.split('graphs/')[1];
+
         if (this.style_objects.hasOwnProperty(graph_id)) {
             this.cy.style(this.style_objects[graph_id])
         }
         else {
-            this.cy.style(this.style_objects.default);
+            this.cy.style(this.style_objects["default"]);
         }
     },
 

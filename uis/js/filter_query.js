@@ -5,11 +5,13 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
     stack_panel: undefined,
     data_schema: undefined,
     graph_uri: undefined,
+    query_counter: 1,
 
     constructor: function(config) {
-        this.container_title = config.container_title === undefined ? "Filter" : config.container_title;
-        this.graph_uri = config.graph_uri;
-        this.data_schema = config.data_schema;
+        Ext.apply(this, config, {
+            container_title: "Filter"
+        });
+
         this.stack_panel = this.createStackPanel();
     },
 
@@ -24,7 +26,9 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
     		autoScroll: true,
     		height: 500,
     		items: [
-    			new org.systemsbiology.hukilau.components.queries.NumericRangeFilter(this.data_schema)
+    			new org.systemsbiology.hukilau.components.queries.NumericRangeFilter({
+                    data_schema: this.data_schema
+                })
 			],
 			tbar: [ ],
 			bbar: [ ]
@@ -35,7 +39,9 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
     		scope: this,
 			handler: function() {
 				stack.removeAll();
-				stack.add(new org.systemsbiology.hukilau.components.queries.NumericRangeFilter(this.data_schema));
+				stack.add(new org.systemsbiology.hukilau.components.queries.NumericRangeFilter({
+                    data_schema: this.data_schema
+                }));
 				stack.doLayout();
 			}
     	});
@@ -44,7 +50,9 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
      		text: "Add filter",
     		scope: this,
     		handler: function() {
-    			stack.add(new org.systemsbiology.hukilau.components.queries.NumericRangeFilter(this.data_schema));
+    			stack.add(new org.systemsbiology.hukilau.components.queries.NumericRangeFilter({
+                    data_schema: this.data_schema
+                }));
     			stack.doLayout();
     		}
     	});
@@ -54,13 +62,13 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
     	var validateFilters = function() {
     		var is_valid = true;
     		Ext.each(stack.items, function(item, index, allItems) {
-    			if (allItems.itemAt(index).isValid() == false) {
+    			if (!allItems.itemAt(index).isValid()) {
     				is_valid = false;
     			}
     		});
 
     		return is_valid;
-    	}
+    	};
 
     	var executeQuery = function() {
     		if (validateFilters() == false) {
@@ -79,13 +87,30 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
 
 			var query_uri = this.graph_uri + '/filter';
 
-	    	org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('filter_query_submitted', {
+	    	org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('fasd_query_submitted', {
 	    		uri: query_uri,
 	    		filters: {
 	    			nodes: node_filters,
 	    			edges: []
 	    		}
 	    	});
+
+            new org.systemsbiology.hukilau.components.QueryResultDisplay({
+                parent_container: this.data_tab_panel,
+                container_title: 'Filter Query ' + this.query_counter,
+                request: {
+                    method: 'post',
+                    uri: query_uri,
+                    params: {
+                        filter_config: Ext.encode({
+                            nodes: node_filters,
+                            edges: []
+                        })
+                    }
+                }
+            });
+
+            this.query_counter++;
     	};
 
     	stack.getBottomToolbar().insertButton(2, {
@@ -95,7 +120,7 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
     	});
 
     	return stack;
-    },
+    }
 });
 
 org.systemsbiology.hukilau.components.queries.NumericRangeFilter = Ext.extend(Ext.Panel, {
@@ -103,19 +128,14 @@ org.systemsbiology.hukilau.components.queries.NumericRangeFilter = Ext.extend(Ex
 	height: 140,
 	padding: 5,
 
-	constructor: function(data_schema) {
-		this.data_schema = data_schema;
+	constructor: function() {
+        Ext.apply(this, arguments);
 		org.systemsbiology.hukilau.components.queries.NumericRangeFilter.superclass.constructor.apply(this, arguments);
 	},
 		
 	initComponent: function() {
 		var validator_fn = function(value) {
-			if (value.length > 0) {
-				return true;
-			}
-			else {
-				return false;
-			}
+			return value.length > 0;
 		};
 
 		this.objectCombo = new Ext.form.ComboBox({
@@ -227,11 +247,7 @@ org.systemsbiology.hukilau.components.queries.NumericRangeFilter = Ext.extend(Ex
 			return false;
 		}
 
-		if ( !(this.minValueField.isValid() || this.maxValueField.isValid()) ) {
-			return false;
-		}
-
-		return true;
+		return this.minValueField.isValid() || this.maxValueField.isValid();
 	},
 
 	getFilter: function() {

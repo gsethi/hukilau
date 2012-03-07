@@ -1,10 +1,29 @@
 Ext.onReady(function() {
+    var graphDisplay = new org.systemsbiology.hukilau.components.GraphDisplay({
+        cytoscape_content_el: 'c_vis'
+    });
+
+    var ajaxMonitor = new org.systemsbiology.addama.js.widgets.AjaxMonitor();
+
+    var dataDisplayPanel = new Ext.TabPanel({
+        region: 'center',
+        id: 'data_display_panel',
+        activeTab: 0,
+        items: [
+            graphDisplay.getPanel(),
+            ajaxMonitor.gridPanel
+        ]
+    });
+
+    graphDisplay.initCytoscape();
+
 	var graphQueryTabs = new Ext.TabPanel({
 
 	});
 
 	var graphDBSelect = new org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect({
-		query_tab_panel: graphQueryTabs
+		query_tab_panel: graphQueryTabs,
+        data_tab_panel: dataDisplayPanel
 	});
 
 	var graphControlPanel = {
@@ -21,28 +40,6 @@ Ext.onReady(function() {
 			graphQueryTabs
 		]
 	};
-
-	var graphDisplay = new org.systemsbiology.hukilau.components.GraphDisplay({
-		cytoscape_content_el: 'c_vis'
-	});
-
-    var ajaxMonitor = new org.systemsbiology.addama.js.widgets.AjaxMonitor();
-    
-	var dataDisplayPanel = new Ext.TabPanel({
-		region: 'center',	
-		id: 'data_display_panel',
-		activeTab: 0,
-		items: [
-			graphDisplay.getPanel(),
-			ajaxMonitor.gridPanel
-		]
-	});
-
-	graphDisplay.initCytoscape();
-	
-	new org.systemsbiology.hukilau.components.QueryHandler({
-		tab_container: dataDisplayPanel
-	});
 
 	new org.systemsbiology.addama.js.TopBar({contentEl: "c_addama_topbar"});
 
