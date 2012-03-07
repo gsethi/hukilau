@@ -95,22 +95,37 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
 	    		}
 	    	});
 
-            new org.systemsbiology.hukilau.components.QueryResultDisplay({
-                parent_container: this.data_tab_panel,
-                container_title: 'Filter Query ' + this.query_counter,
-                request: {
-                    method: 'post',
-                    uri: query_uri,
-                    params: {
-                        filter_config: Ext.encode({
-                            nodes: node_filters,
-                            edges: []
-                        })
-                    }
+            Ext.Ajax.request({
+                method: 'post',
+                url: query_uri,
+                params: {
+                    filter_config: Ext.encode({
+                        nodes: node_filters,
+                        edges: []
+                    })
+                },
+                scope: this,
+                success: function(o) {
+                    var tab = new org.systemsbiology.hukilau.components.QueryResultDisplay({
+                        container_title: 'Filter Result ' + this.query_counter,
+                        json: Ext.util.JSON.decode(o.responseText)
+                    });
+
+                    this.data_tab_panel.add(tab.getPanel());
+                    this.data_tab_panel.activate(tab.getPanel());
+                    this.query_counter++;
+                },
+                failure: function() {
+                    var tab = new org.systemsbiology.hukilau.queries.ErrorDisplay({
+                        container_title: 'Filter Result ' + this.query_counter,
+                        message: "Query Failed"
+                    });
+
+                    this.data_tab_panel.add(tab);
+                    this.data_tab_panel.activate(tab);
+                    this.query_counter++;
                 }
             });
-
-            this.query_counter++;
     	};
 
     	stack.getBottomToolbar().insertButton(2, {

@@ -265,16 +265,31 @@ org.systemsbiology.hukilau.components.queries.NodeQuery = Ext.extend(Ext.Panel, 
 												'&level=' + level +
 												'&nodeLabel=' + node_prop;
 
-                                new org.systemsbiology.hukilau.components.QueryResultDisplay({
-                                    parent_container: this.data_tab_panel,
-                                    container_title: 'Node Query ' + this.query_counter,
-                                    request: {
-                                        method: 'get',
-                                        uri: query_uri
+                                Ext.Ajax.request({
+                                    method: 'get',
+                                    url: query_uri,
+                                    scope: this,
+                                    success: function(o) {
+                                        var tab = new org.systemsbiology.hukilau.components.QueryResultDisplay({
+                                            container_title: 'Node Query ' + this.query_counter,
+                                            json: Ext.util.JSON.decode(o.responseText)
+                                        });
+
+                                        this.data_tab_panel.add(tab.getPanel());
+                                        this.data_tab_panel.activate(tab.getPanel());
+                                        this.query_counter++;
+                                    },
+                                    failure: function() {
+                                        var tab = new org.systemsbiology.hukilau.queries.ErrorDisplay({
+                                            container_title: 'Node Query ' + this.query_counter,
+                                            message: "Query Failed"
+                                        });
+
+                                        this.data_tab_panel.add(tab);
+                                        this.data_tab_panel.activate(tab);
+                                        this.query_counter++;
                                     }
                                 });
-
-                                this.query_counter++;
 							}
 						}
 					}
