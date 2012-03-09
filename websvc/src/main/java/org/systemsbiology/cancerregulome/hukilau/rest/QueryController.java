@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import static java.lang.Long.parseLong;
 import static org.apache.commons.lang.StringUtils.*;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
@@ -113,15 +114,12 @@ public class QueryController implements InitializingBean {
     protected ModelAndView retrieveNode(HttpServletRequest request,
                                         @PathVariable("graphDbId") String graphDbId,
                                         @PathVariable("nodeId") String nodeId) throws Exception {
-        // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
-        IndexManager indexMgr = graphDB.index();
-        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
-        Node searchNode = nodeIdx.get("name", nodeId).getSingle();
+        Node targetNode = graphDB.getNodeById(parseLong(nodeId));
 
-        NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNode);
+        NodeMaps nodeMaps = traverseFrom(traversalLevel, targetNode);
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/nodes");
 
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
