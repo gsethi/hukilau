@@ -1,132 +1,245 @@
 Ext.ns('org.systemsbiology.hukilau.components');
 
-var GraphDisplay = Ext.extend(Object, {
-    vis: undefined,
-    container_id: undefined,
-    data_schema: undefined,
+org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
+    cy: undefined,
+    cytoscape_content_el: undefined,
+    container_title: undefined,
+    graph_panel: undefined,
+    width: undefined,
+    height: undefined,
+    layout_name: undefined,
 
-    constructor: function(p_container_id) {
-        this.container_id = p_container_id;
+    cytoscape_options: {
+        renderer: {
+            name: "svg"
+        },
+        layout: {
+            name: "grid"
+        },
+        style: {
+            selectors: {
+                "edge": {
+                    targetArrowShape: "triangle",
+                    width: 1
+                },
+
+                "node": {
+                    labelText: {
+                        defaultValue: ""
+                    },
+                    shape: "ellipse",
+                    height: 10,
+                    width: 10
+                },
+
+                "node:selected": {
+                    fillColor: "#333"
+                }
+            }
+        },
+        elements: {
+            nodes: [],
+            edges: []
+        }
     },
 
-    init: function(nodes, edges) {        
-        var graph_display = this;
+    constructor: function(config) {
+        Ext.apply(this, config, {
+            container_title: "Graph",
+            width: 700,
+            height: 700,
+            layout_name: "grid"
+        });
 
-        if (this.data_schema === undefined) {
-            console.log("CytoscapeWeb init failed: dataSchema not set");
+        this.cytoscape_options.style = this.default_visual_style;
+        this.initCytoscape();
+
+        this.graph_panel = new Ext.Panel({
+            title: this.container_title,
+            contentEl: this.cytoscape_content_el,
+            listeners: {
+                activate: {
+                    scope: this,
+                    fn: function() {
+                        if (this.cy !== undefined) {
+                            this.cy.layout({
+                                name: this.layout_name
+                            });
+                        }
+                    }
+                }
+            },
+            tbar: [
+                {
+                    text: "Layout",
+                    menu: new Ext.menu.Menu({
+                        items: [
+                            {
+                                text: "Grid",
+                                scope: this,
+                                handler: function() {
+                                    this.setLayout("grid");
+                                }
+                            },
+                            {
+                                text: "Random",
+                                scope: this,
+                                handler: function() {
+                                    this.setLayout("random");
+                                }
+                            },
+                            {
+                                text: "Arbor",
+                                scope: this,
+                                handler: function() {
+                                    this.setLayout("arbor");
+                                }
+                            },
+                            {
+                                text: "Springy",
+                                scope: this,
+                                handler: function() {
+                                    this.setLayout("springy");
+                                }
+                            }
+                        ]
+                    })
+                },
+                {
+                    text: "Expand neighbours",
+                    scope: this,
+                    handler: this.expandNeighbours
+                }
+            ]
+        });
+        
+
+    },
+
+    getPanel: function() {
+        return this.graph_panel;
+    },
+
+    getVisContainer: function() {
+        // Insert a div element for Cytoscape SVG rendering
+        var el = Ext.DomHelper.append(this.cytoscape_root_id, {
+            tag: 'div'
+        });
+
+        // Generate a unique id for the Cytoscape div and apply that id to the element
+        this.cytoscape_content_el = Ext.id(el);
+
+        var selector = "#" + this.cytoscape_content_el;
+        jQuery(selector).width(this.width).height(this.height);
+        return jQuery(selector);
+    },
+
+    initCytoscape: function() {
+        var that = this;
+
+        this.cytoscape_options.ready = function(cy) {
+            that.cy = cy;
+        };
+
+        this.getVisContainer().cytoscapeweb(this.cytoscape_options);
+    },
+
+    destroy: function(){
+        // Remove the Cytoscape div
+        var el = Ext.get(this.cytoscape_content_el);
+        Ext.DomHelper.overwrite(el, "");
+    },
+
+    addElements: function(params) {
+        var elements = [];
+        var new_nodes = [];
+
+        Ext.each(params.node_rows, function(row, index) {
+            var node_data = params.data_fn(row);
+
+            if (this.cy.nodes("[id='" + node_data.id + "']").size() == 0) {
+                new_nodes.push(node_data);
+            }
+        }, this);
+
+        var num_nodes = new_nodes.length;
+        Ext.each(new_nodes, function(node, index) {
+            var el = {
+                group: "nodes",
+                data: node
+            };
+
+            if (params.coordinate_fn !== undefined) {
+                el.position = params.coordinate_fn(num_nodes, index, 100);
+            }
+
+            elements.push(el);
+        }, this);
+
+        Ext.each(params.edge_rows, function(row) {
+            var edge_data = params.data_fn(row);
+
+            if (this.cy.edges("[id='" + edge_data.id + "']").size() == 0) {
+                var edge_element = {};
+                Ext.apply(edge_element, edge_data);
+                Ext.destroyMembers(edge_element, 'source_label', 'target_label');
+                elements.push({
+                    group: "edges",
+                    data: edge_element
+                });
+            }
+        }, this);
+
+        if (this.cy.nodes().size() == 0) {
+            this.cy.load(elements);
+        }
+        else {
+            this.cy.add(elements);
+        }
+    },
+
+    setLayout: function(name) {
+        this.layout_name = name;
+        this.cy.layout({
+            name: this.layout_name
+        });
+    },
+
+    expandNeighbours: function(nodes) {
+        var selected = this.cy.elements("node:selected");
+        var n = selected.length;
+        if (n == 0) {
             return;
         }
 
-        this.vis = new org.cytoscapeweb.Visualization(this.container_id, {
-            swfPath: "https://informatics-apps.systemsbiology.net/cytoscapeweb_v1.0/swf/CytoscapeWeb",
-            flashInstallerPath: "https://informatics-apps.systemsbiology.net/cytoscapeweb_v1.0/swf/playerProductInstall"
-        });
+        var node = selected[0];
+        var query_uri = node.data().uri + '?level=2';
 
-        this.vis.ready(function() {
-            var that = this;
+        Ext.Ajax.request({
+            method: 'get',
+            url: query_uri,
+            scope: this,
+            success: function(d) {
+                var json = Ext.util.JSON.decode(d.responseText);
 
-            this.addContextMenuItem("Select first neighbors", "nodes", function(evt) {
-                var root_node = evt.target;
-
-                var first_neighbors = that.firstNeighbors([root_node]);
-                var neighbor_nodes = first_neighbors.neighbors;
-                that.select([root_node]).select(neighbor_nodes);
-            });
-
-            // Add new elements
-            var elements = graph_display.getGraphElements();
-            this.addElements(elements);
-            
-            // Redo layout
-            this.layout( {name: 'ForceDirected', options: {}} );
-        });
-        
-        this.vis.draw({
-            network: {
-                dataSchema: this.data_schema,
-                nodes: nodes,
-                edges: edges
-            },
-            nodeTooltipsEnabled: true,
-            edgeTooltipsEnabled: true
-        });             
-    },
-
-    displayError: function() {
-        Ext.get(this.container_id).dom.innerHTML = '<p class="graph_error">Please add nodes and edges using the Node and Edge grid tabs.</p>';
-    },
-
-    setDataSchema: function(schema) {
-        var that = this;
-        that.data_schema = schema;
-
-        if (this.vis === undefined) {
-            this.init([], []);
-        }
-    },
-
-    filterEdgeElement: function(element) {
-        var el = {};
-
-        var n = this.data_schema.edges.length;
-        for (var i = 0; i < n; i++) {
-            var field = this.data_schema.edges[i];
-            if (element.hasOwnProperty(field.name)) {
-                el[field.name] = element[field.name];
-            }
-        }
-
-        return el;
-    },
-
-    getGraphElements: function() {
-        var graph = org.systemsbiology.hukilau.components.GraphManager.getGraph();
-        var elements = [];
-
-        for (var node_uri in graph.nodes) {
-            if (graph.nodes.hasOwnProperty(node_uri)) {
-                var node_data = graph.nodes[node_uri];
-
-                elements.push( {
-                    group: "nodes",
-                    data: node_data
+                this.addElements({
+                    node_rows: json.data.nodes,
+                    edge_rows: json.data.edges,
+                    data_fn: function(x) {return x;},
+                    coordinate_fn: this.createCircularCoordFn(node.position())
                 });
             }
-        }
-
-        for (var edge_uri in graph.edges) {
-            if (graph.edges.hasOwnProperty(edge_uri)) {
-                var edge_data = this.filterEdgeElement(graph.edges[edge_uri]);
-
-                elements.push( {
-                    group: "edges",
-                    data: edge_data
-                });
-            }
-        }
-
-        return elements;
+        });
     },
 
-    addNodes: function(node_uris) {
-        var that = this;
+    createCircularCoordFn: function(base) {
+        return function(num, index, dist) {
+            var rad = index * (360 / num) * Math.PI / 180;
 
-        if (that.vis === undefined) {
-            console.log("CytoscapeWeb not ready: no nodes added");
-        }
-        else {
-            var n = node_uris.length;
-            for (var i = 0; i < n; i++) {
-                var uri = node_uris[i];
-                var node = org.systemsbiology.hukilau.components.GraphManager.getNode(uri);
-                console.log(node);
-            }
-        }
-    }    
+            return {
+                x: base.x + dist * (Math.cos(rad) - Math.sin(rad)),
+                y: base.y + dist * (Math.sin(rad) + Math.cos(rad))
+            };
+        };
+    }
 });
-
-org.systemsbiology.hukilau.components.GraphDisplay = new GraphDisplay('c_vis');
-
-org.systemsbiology.hukilau.apis.events.MessageBus.on('graph_dataschema_available',
-    org.systemsbiology.hukilau.components.GraphDisplay.setDataSchema,
-    org.systemsbiology.hukilau.components.GraphDisplay);

@@ -1,63 +1,43 @@
 Ext.onReady(function() {
-	var graphQueryTabs = new Ext.TabPanel({
-		activeTab: 0,
-		items: [
-			org.systemsbiology.hukilau.apis.panels.NodeQuery
-		]
-	});
+    var workspaceContainer, graphQueryTabs, graphDBSelect, graphControlPanel, addamaToolbar;
 
-	var graphControlPanel = {
-		xtype: 'panel',
-		id: 'graph_control_panel',
-		region: 'west',
-		contentEl: 'c_graph_control',
-		width: 300,
-		layout: 'auto',
-		layoutConfig: {
-			align: 'top'
-		},
-		items: [
-			org.systemsbiology.hukilau.apis.panels.GraphDatabaseSelect,
-			graphQueryTabs,
-			org.systemsbiology.hukilau.apis.panels.QueryResultInfo,
-			org.systemsbiology.hukilau.apis.panels.NodeSchemaSettings,
-			org.systemsbiology.hukilau.apis.panels.EdgeSchemaSettings
-		]
-	};
+    workspaceContainer = new org.systemsbiology.hukilau.components.WorkspaceContainer({
+        region:'center'
+    });
 
-	var graphDisplayPanel = {
-		title: "Graph",
-		contentEl: 'c_vis'
-	};
+    graphQueryTabs = new Ext.TabPanel();
 
-	var queryResultPanel = {
-		title: 'Query Result',
-		layout: 'border',
-		items: [
-			org.systemsbiology.hukilau.apis.panels.nodePropGridPanel,
-			org.systemsbiology.hukilau.apis.panels.edgePropGridPanel
-		]
-	};
+    graphDBSelect = new org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect({
+        query_tab_panel: graphQueryTabs,
+        workspace_container: workspaceContainer
+    });
 
-	var dataDisplayPanel = new Ext.TabPanel({
-		region: 'center',
-		id: 'data_display_panel',
-		activeTab: 0,
-		items: [
-			graphDisplayPanel,
-			queryResultPanel
-		]
-	});
+    graphControlPanel = {
+        xtype:'panel',
+        region:'west',
+        width:300,
+        layout:'auto',
+        layoutConfig:{
+            align:'top'
+        },
+        items:[
+            graphDBSelect.getPanel(),
+            graphQueryTabs
+        ]
+    };
 
-	new org.systemsbiology.addama.js.TopBar({contentEl: "c_addama_topbar"});
+    addamaToolbar = new org.systemsbiology.addama.js.TopBarToolbar({
+        region:'north',
+        height:30
+    });
 
-	new Ext.Viewport({
-		layout: 'border',
-		renderTo: Ext.getBody(),
-		items: [
-			new Ext.Panel({ contentEl: 'c_addama_topbar', region: 'north', height: 27 }),
-			graphControlPanel,
-			dataDisplayPanel
-		]
-	});
+    new Ext.Viewport({
+        layout:'border',
+        renderTo:Ext.getBody(),
+        items:[
+            addamaToolbar,
+            graphControlPanel,
+            workspaceContainer
+        ]
+    });
 });
