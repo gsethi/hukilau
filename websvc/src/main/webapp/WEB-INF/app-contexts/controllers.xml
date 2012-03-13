@@ -3,12 +3,16 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
+    <bean id="executorService" class="java.util.concurrent.Executors" factory-method="newFixedThreadPool" destroy-method="shutdown" lazy-init="false">
+        <constructor-arg value="16"/>
+    </bean>
+
     <bean class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
         <property name="alwaysUseFullPath" value="true"/>
         <property name="urlMap">
             <map>
                 <entry key="/**">
-                    <bean class="org.systemsbiology.cancerregulome.hukilau.rest.QueryController" autowire="byType"/>
+                    <bean class="org.systemsbiology.cancerregulome.hukilau.rest.QueryController" autowire="byType" destroy-method="cleanUp"/>
                 </entry>
             </map>
         </property>
