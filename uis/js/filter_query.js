@@ -87,14 +87,6 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
 
 			var query_uri = this.graph_uri + '/filter';
 
-	    	org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('fasd_query_submitted', {
-	    		uri: query_uri,
-	    		filters: {
-	    			nodes: node_filters,
-	    			edges: []
-	    		}
-	    	});
-
             Ext.Ajax.request({
                 method: 'post',
                 url: query_uri,
@@ -106,24 +98,10 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
                 },
                 scope: this,
                 success: function(o) {
-                    var tab = new org.systemsbiology.hukilau.components.QueryResultDisplay({
-                        container_title: 'Filter Result ' + this.query_counter,
-                        json: Ext.util.JSON.decode(o.responseText)
-                    });
-
-                    this.data_tab_panel.add(tab.getPanel());
-                    this.data_tab_panel.activate(tab.getPanel());
-                    this.query_counter++;
+                    this.workspace_container.getWorkspace(this.graph_id).insertResultTab(Ext.util.JSON.decode(o.responseText));
                 },
                 failure: function() {
-                    var tab = new org.systemsbiology.hukilau.queries.ErrorDisplay({
-                        container_title: 'Filter Result ' + this.query_counter,
-                        message: "Query Failed"
-                    });
-
-                    this.data_tab_panel.add(tab);
-                    this.data_tab_panel.activate(tab);
-                    this.query_counter++;
+                    this.workspace_container.getWorkspace(this.graph_id).insertMessageTab("Query failed");
                 }
             });
     	};
