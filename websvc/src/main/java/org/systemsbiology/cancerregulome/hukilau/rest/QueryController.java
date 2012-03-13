@@ -1,14 +1,15 @@
 package org.systemsbiology.cancerregulome.hukilau.rest;
 
-import groovy.json.JsonException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.index.RelationshipIndex;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.graphdb.index.IndexManager;
 import org.neo4j.kernel.AbstractGraphDatabase;
+import org.springframework.aop.ThrowsAdvice;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import org.systemsbiology.addama.jsonconfig.impls.StringPropertyByIdMappingsHand
 import org.systemsbiology.cancerregulome.hukilau.configs.Neo4jGraphDbMappingsHandler;
 import org.systemsbiology.cancerregulome.hukilau.configs.NetworkMetadataMappingsHandler;
 import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
+import org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps;
 import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
 import org.systemsbiology.cancerregulome.hukilau.utils.FilterUtils;
 
@@ -34,6 +36,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
 import org.apache.lucene.search.*;
@@ -51,9 +54,11 @@ import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.NO
 @Controller
 public class QueryController implements InitializingBean {
     private static final Logger log = Logger.getLogger(QueryController.class.getName());
+    private ExecutorService executorService;
     private final Map<String, AbstractGraphDatabase> graphDbsById = new HashMap<String, AbstractGraphDatabase>();
     private final Map<String, String> labelsById = new HashMap<String, String>();
     private final Map<String, String> nodeIdxById = new HashMap<String, String>();
+    private final Map<String, String> relIdxById = new HashMap<String, String>();
     private final Map<String, JSONObject> networkMetadataById = new HashMap<String, JSONObject>();
 
     private ServiceConfig serviceConfig;
@@ -66,6 +71,7 @@ public class QueryController implements InitializingBean {
         this.serviceConfig.visit(new Neo4jGraphDbMappingsHandler(graphDbsById));
         this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsById, "label"));
         this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(nodeIdxById, "nodeIdx"));
+        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(relIdxById, "relIdx"));
         this.serviceConfig.visit(new NetworkMetadataMappingsHandler(networkMetadataById));
     }
 
@@ -175,6 +181,41 @@ public class QueryController implements InitializingBean {
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
     }
 
+    //retrieves relationships amongst all nodes specified in the nodeSet parameter.  nodeset is a JSONArray containing
+    //JSONObjects with the node key and node value to lookup specific nodes.
+    @RequestMapping(value = "/**/graphs/{graphDBId}/relationships/query", method = RequestMethod.GET)
+    protected ModelAndView retrieveRelationships(HttpServletRequest request, @PathVariable("graphDbId") String graphDbId,
+                                                @RequestParam("nodeSet") String nodeSet) throws Exception {
+
+        if (isEmpty(nodeSet)) {
+            throw new InvalidSyntaxException("missing 'nodeSet' object");
+        }
+
+        JSONArray nodeSetJson = new JSONArray(nodeSet);
+
+        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        IndexManager indexMgr = graphDB.index();
+        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
+        RelationshipIndex relIdx = indexMgr.forRelationships(relIdxById.get(graphDbId));
+
+        //get all node objects from index
+        NodeMaps nodeMaps = new NodeMaps();
+        for(int i=0; i< nodeSetJson.length(); i++){
+            JSONObject nodeItem = (JSONObject) nodeSetJson.get(i);
+            String key = (String)nodeItem.keys().next();
+            nodeMaps.addNode(nodeIdx.get(key, nodeItem.get(key)).getSingle());
+        }
+
+        //get all relationships between the nodes, nodeMaps will be updated.
+        NetworkOps.getRelationships(nodeMaps, relIdx, executorService);
+
+        String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/relationships");
+        return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+
+
+
+    }
+
     private AbstractGraphDatabase getGraphDb(String graphDbId) throws ResourceNotFoundException {
         if (!this.graphDbsById.containsKey(graphDbId)) {
             throw new ResourceNotFoundException(graphDbId);
@@ -214,5 +255,21 @@ public class QueryController implements InitializingBean {
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/filter");
 
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+    }
+
+    public void cleanUp() {
+        log.info("executor service shutdown: started");
+        try {
+            this.executorService.shutdown();
+        } catch (Exception e) {
+            log.warning("executor service shutdown: " + e.getMessage());
+        } finally {
+            log.info("executor service shutdown: complete");
+        }
+
+    }
+
+    public void setExecutorService(ExecutorService es){
+        this.executorService=es;
     }
 }
