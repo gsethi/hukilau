@@ -1,34 +1,45 @@
 package org.systemsbiology.cancerregulome.hukilau.rest;
 
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.index.Index;
+import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.graphdb.index.IndexManager;
 import org.neo4j.kernel.AbstractGraphDatabase;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.servlet.ModelAndView;
 import org.systemsbiology.addama.commons.web.exceptions.InvalidSyntaxException;
 import org.systemsbiology.addama.commons.web.exceptions.ResourceNotFoundException;
 import org.systemsbiology.addama.commons.web.views.JsonItemsView;
 import org.systemsbiology.addama.commons.web.views.JsonView;
+import org.systemsbiology.addama.commons.web.editors.*;
 import org.systemsbiology.addama.jsonconfig.ServiceConfig;
 import org.systemsbiology.addama.jsonconfig.impls.StringPropertyByIdMappingsHandler;
 import org.systemsbiology.cancerregulome.hukilau.configs.Neo4jGraphDbMappingsHandler;
+import org.systemsbiology.cancerregulome.hukilau.configs.NetworkMetadataMappingsHandler;
 import org.systemsbiology.cancerregulome.hukilau.pojo.NodeMaps;
 import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
+import org.systemsbiology.cancerregulome.hukilau.utils.FilterUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
+
+import org.apache.lucene.search.*;
+import org.apache.lucene.index.*;
 
 import static java.lang.Long.parseLong;
 import static org.apache.commons.lang.StringUtils.*;
@@ -46,6 +57,7 @@ public class QueryController implements InitializingBean {
     private final Map<String, AbstractGraphDatabase> graphDbsById = new HashMap<String, AbstractGraphDatabase>();
     private final Map<String, String> labelsById = new HashMap<String, String>();
     private final Map<String, String> nodeIdxById = new HashMap<String, String>();
+    private final Map<String, JSONObject> networkMetadataById = new HashMap<String, JSONObject>();
 
     private ServiceConfig serviceConfig;
 
@@ -57,6 +69,12 @@ public class QueryController implements InitializingBean {
         this.serviceConfig.visit(new Neo4jGraphDbMappingsHandler(graphDbsById));
         this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsById, "label"));
         this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(nodeIdxById, "nodeIdx"));
+        this.serviceConfig.visit(new NetworkMetadataMappingsHandler(networkMetadataById));
+    }
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(JSONObject.class, new JSONObjectPropertyEditor());
     }
 
     /*
@@ -86,21 +104,11 @@ public class QueryController implements InitializingBean {
         String uri = substringAfterLast(request.getRequestURI(), request.getContextPath());
         log.info("graphDbId=" + graphDbId);
 
-//        AbstractGraphDatabase graphDb = getGraphDb(graphDbId);
-//        IndexManager indexMgr = graphDb.index("generalIdx");
-
         JSONObject json = new JSONObject();
         json.put("uri", uri);
         json.put("id", graphDbId);
         json.put("name", graphDbId);
         json.put("label", labelsById.get(graphDbId));
-
-        // TODO : Need to add node types, edge types, and property data types to the response
-//            json.append("nodeTypes", new JSONObject().put("name", niName).put("uri", uri + "/nodeTypes/" + niName));
-//        addNumberOf(json, "nodeTypes");
-
-//            json.append("edgeTypes", new JSONObject().put("name", riName).put("uri", uri + "/edgeTypes/" + riName));
-//        addNumberOf(json, "edgeTypes");
 
         JSONObject dataSchema = new JSONObject();
         dataSchema.put("nodes", new JSONArray());
@@ -108,6 +116,17 @@ public class QueryController implements InitializingBean {
         json.put("dataSchema", dataSchema);
 
         return new ModelAndView(new JsonView()).addObject("json", json);
+    }
+
+    @RequestMapping(value = "/**/graphs/{graphDbId}/metadata", method = RequestMethod.GET)
+    protected ModelAndView networkMetadata(@PathVariable("graphDbId") String graphDbId) throws Exception {
+        log.info("graphDbId=" + graphDbId);
+
+        if (!networkMetadataById.containsKey(graphDbId)) {
+            throw new ResourceNotFoundException(graphDbId);
+        }
+
+        return new ModelAndView(new JsonView()).addObject("json", networkMetadataById.get(graphDbId));
     }
 
     @RequestMapping(value = "/**/graphs/{graphDbId}/nodes/{nodeId}", method = RequestMethod.GET)
@@ -147,7 +166,10 @@ public class QueryController implements InitializingBean {
         while (itr.hasNext()) {
             String key = (String) itr.next();
             String value = queryJson.getString(key);
-            searchNodes.add(nodeIdx.get(key, value).getSingle());
+
+            for (Node node : nodeIdx.get(key, value)) {
+                searchNodes.add(node);
+            }
         }
 
         NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNodes.toArray(new Node[searchNodes.size()]));
@@ -166,4 +188,34 @@ public class QueryController implements InitializingBean {
         }
         return graphDb;
     }
+
+    @RequestMapping(value = "/**/graphs/{graphDbId}/filter", method = RequestMethod.POST)
+    protected ModelAndView filterNodes(HttpServletRequest request,
+                                       @PathVariable("graphDbId") String graphDbId,
+                                       @RequestParam("filter_config") JSONObject filter_config) throws Exception {
+        BooleanQuery node_query = null;
+
+        try {
+            JSONArray node_filter_list = filter_config.getJSONArray("nodes");
+            node_query = FilterUtils.buildBooleanQuery(node_filter_list);
+        }
+        catch (JSONException e) {
+            throw new InvalidSyntaxException(e.getMessage());
+        }
+        
+        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        IndexManager indexMgr = graphDB.index();
+        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
+
+        IndexHits<Node> hits = nodeIdx.query(node_query);
+        NodeMaps nodeMaps = new NodeMaps();
+
+        for (Node node : hits) {
+            nodeMaps.addNode(node);
+        }
+
+        String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/filter");
+
+        return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+    }    
 }
