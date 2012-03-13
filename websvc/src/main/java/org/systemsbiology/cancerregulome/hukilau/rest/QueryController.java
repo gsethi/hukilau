@@ -1,9 +1,9 @@
 package org.systemsbiology.cancerregulome.hukilau.rest;
 
-import groovy.json.JsonException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
+
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
@@ -28,17 +28,15 @@ import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
 import org.systemsbiology.cancerregulome.hukilau.utils.FilterUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.lucene.search.*;
-import org.apache.lucene.index.*;
 
+import static java.lang.Long.parseLong;
 import static org.apache.commons.lang.StringUtils.*;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
@@ -130,15 +128,12 @@ public class QueryController implements InitializingBean {
     protected ModelAndView retrieveNode(HttpServletRequest request,
                                         @PathVariable("graphDbId") String graphDbId,
                                         @PathVariable("nodeId") String nodeId) throws Exception {
-        // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
-        IndexManager indexMgr = graphDB.index();
-        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
-        Node searchNode = nodeIdx.get("name", nodeId).getSingle();
+        Node targetNode = graphDB.getNodeById(parseLong(nodeId));
 
-        NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNode);
+        NodeMaps nodeMaps = traverseFrom(traversalLevel, targetNode);
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/nodes");
 
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
@@ -166,7 +161,10 @@ public class QueryController implements InitializingBean {
         while (itr.hasNext()) {
             String key = (String) itr.next();
             String value = queryJson.getString(key);
-            searchNodes.add(nodeIdx.get(key, value).getSingle());
+
+            for (Node node : nodeIdx.get(key, value)) {
+                searchNodes.add(node);
+            }
         }
 
         NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNodes.toArray(new Node[searchNodes.size()]));
