@@ -63,19 +63,13 @@ org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect = Ext.extend(O
 				}),
 
 				root: 'items',
-				fields: ['label', 'uri']
+				fields: ['label', 'uri', 'id']
             }),
             listeners: {
         		select: {
         			scope: this,
         			fn: function(combo, value) {
-                        org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('graph_db_selected', value.data);
-
-                        var graph_name,
-                            meta_uri;
-
-                        graph_name = value.data.uri.split('graphs/')[1];
-                        meta_uri = '/addama/graphs/' + graph_name + '/metadata';
+                        var meta_uri = value.data.uri + '/metadata';
 
                         Ext.Ajax.request({
                             method:"get",
@@ -93,20 +87,24 @@ org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect = Ext.extend(O
                                 this.processDataSchema(json);
 
                                 node_query = new org.systemsbiology.hukilau.components.queries.NodeQuery({
-                                    data_tab_panel: this.data_tab_panel,
+                                    workspace_container: this.workspace_container,
                                     graph_uri: value.data.uri,
+                                    graph_id: value.data.id,
                                     data_schema: this.data_schema
                                 });
 
                                 filter_query = new org.systemsbiology.hukilau.components.queries.FilterQuery({
-                                    data_tab_panel: this.data_tab_panel,
+                                    workspace_container: this.workspace_container,
                                     graph_uri: value.data.uri,
+                                    graph_id: value.data.id,
                                     data_schema: this.data_schema
                                 });
 
                                 this.query_tab_panel.removeAll();
                                 this.query_tab_panel.add(node_query);
                                 this.query_tab_panel.add(filter_query.getPanel());
+
+                                this.workspace_container.createWorkspace(value.data);
                             }
                         });
                     }
@@ -270,24 +268,10 @@ org.systemsbiology.hukilau.components.queries.NodeQuery = Ext.extend(Ext.Panel, 
                                     url: query_uri,
                                     scope: this,
                                     success: function(o) {
-                                        var tab = new org.systemsbiology.hukilau.components.QueryResultDisplay({
-                                            container_title: 'Node Query ' + this.query_counter,
-                                            json: Ext.util.JSON.decode(o.responseText)
-                                        });
-
-                                        this.data_tab_panel.add(tab.getPanel());
-                                        this.data_tab_panel.activate(tab.getPanel());
-                                        this.query_counter++;
+                                        this.workspace_container.getWorkspace(this.graph_id).insertResultTab(Ext.util.JSON.decode(o.responseText));
                                     },
                                     failure: function() {
-                                        var tab = new org.systemsbiology.hukilau.queries.ErrorDisplay({
-                                            container_title: 'Node Query ' + this.query_counter,
-                                            message: "Query Failed"
-                                        });
-
-                                        this.data_tab_panel.add(tab);
-                                        this.data_tab_panel.activate(tab);
-                                        this.query_counter++;
+                                        this.workspace_container.getWorkspace(this.graph_id).insertMessageTab("Query failed");
                                     }
                                 });
 							}

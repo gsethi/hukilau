@@ -1,6 +1,6 @@
 Ext.ns('org.systemsbiology.hukilau.components');
 
-org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
+org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Ext.util.Observable,{
 	node_prop_store: undefined,
 	node_grid: undefined,
 	edge_prop_store: undefined,
@@ -20,6 +20,10 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
         else {
             this.create_msg_panel("Query result is empty");
         }
+
+        this.addEvents({
+            addElements: true
+        });
 	},
 
 	create_msg_panel: function(message) {
@@ -32,6 +36,7 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 
 	create_grids: function(data) {
 		this.node_prop_store = new Ext.data.JsonStore({
+            autoDestroy: true,
 			data: {
 				rows: data.data.nodes,
 				metaData: {
@@ -65,19 +70,16 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		    			});
 
                         var filter_fn = function (record) {
-                            var source = record.data.source;
-		    				var target = record.data.target;
-
-		    				return nodes.hasOwnProperty(source) && nodes.hasOwnProperty(target);
+		    				return nodes.hasOwnProperty(record.data.source) && nodes.hasOwnProperty(record.data.target);
 		    			};
 
 		    			var edge_rows = this.edge_grid.getStore().queryBy(filter_fn);
 
-		    			org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('add_elements_to_graph', {
-		    				graph_uri: Ext.getCmp('graph_database_combo').getValue(),
-		    				node_rows: node_rows,
-		    				edge_rows: edge_rows.items
-		    			});	
+                        this.fireEvent("addElements", {
+                            node_rows: node_rows,
+                            edge_rows: edge_rows.items,
+                            data_fn: function(x) {return x.data;}
+                        });
 		    		}
 		    	}
 		    ]
@@ -86,6 +88,7 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 		this.add_node_label_fields(data.dataSchema.edges);
 		this.add_node_labels(data.data.edges, data.data.nodes);
 		this.edge_prop_store = new Ext.data.JsonStore({
+            autoDestroy: true,
 			data: {
 				rows: data.data.edges,
 				metaData: {
@@ -128,11 +131,11 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Object,{
 
 		    			var node_rows = this.node_grid.getStore().queryBy(filter_fn);
 
-		    			org.systemsbiology.hukilau.apis.events.MessageBus.fireEvent('add_elements_to_graph', {
-		    				graph_uri: Ext.getCmp('graph_database_combo').getValue(),
-		    				node_rows: node_rows.items,
-		    				edge_rows: edge_rows
-		    			});
+                        this.fireEvent("addElements", {
+                            node_rows: node_rows.items,
+                            edge_rows: edge_rows,
+                            data_fn: function(x) {return x.data;}
+                        });
 		    		}
 		    	}
 		    ]

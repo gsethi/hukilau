@@ -8,7 +8,6 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
     width: undefined,
     height: undefined,
     layout_name: undefined,
-    style_objects: {},
 
     cytoscape_options: {
         renderer: {
@@ -51,6 +50,9 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
             height: 700,
             layout_name: "grid"
         });
+
+        this.cytoscape_options.style = this.default_visual_style;
+        this.initCytoscape();
 
         this.graph_panel = new Ext.Panel({
             title: this.container_title,
@@ -111,51 +113,22 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
             ]
         });
         
-        this.loadStyleObjects();
 
-        org.systemsbiology.hukilau.apis.events.MessageBus.on('graph_db_selected', this.handleGraphDBChange, this);
-
-        org.systemsbiology.hukilau.apis.events.MessageBus.on('add_elements_to_graph', function(d) {
-            this.addElements(d, function(x) { return x.data; });
-        }, this);
     },
 
     getPanel: function() {
         return this.graph_panel;
     },
 
-    loadStyleObjects: function() {
-        var styles = {};
-
-        Ext.Ajax.request({
-            method: 'get',
-            url: '/addama/stores/graphStyles/',
-            scope: this,
-            success: function(o) {
-                var data = Ext.util.JSON.decode(o.responseText);
-                Ext.each(data.items, function(item) {
-                    styles[item.id] = item.style;
-                });
-            }
+    getVisContainer: function() {
+        // Insert a div element for Cytoscape SVG rendering
+        var el = Ext.DomHelper.append(this.cytoscape_root_id, {
+            tag: 'div'
         });
 
-        this.style_objects = styles;
-    },
+        // Generate a unique id for the Cytoscape div and apply that id to the element
+        this.cytoscape_content_el = Ext.id(el);
 
-    handleGraphDBChange: function(params) {
-        var graph_id;
-
-        graph_id = params.uri.split('graphs/')[1];
-
-        if (this.style_objects.hasOwnProperty(graph_id)) {
-            this.cy.style(this.style_objects[graph_id])
-        }
-        else {
-            this.cy.style(this.style_objects["default"]);
-        }
-    },
-
-    getVisContainer: function() {
         var selector = "#" + this.cytoscape_content_el;
         jQuery(selector).width(this.width).height(this.height);
         return jQuery(selector);
@@ -171,12 +144,18 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
         this.getVisContainer().cytoscapeweb(this.cytoscape_options);
     },
 
-    addElements: function(params, data_fn, coordinate_fn) {
+    destroy: function(){
+        // Remove the Cytoscape div
+        var el = Ext.get(this.cytoscape_content_el);
+        Ext.DomHelper.overwrite(el, "");
+    },
+
+    addElements: function(params) {
         var elements = [];
         var new_nodes = [];
 
         Ext.each(params.node_rows, function(row, index) {
-            var node_data = data_fn(row);
+            var node_data = params.data_fn(row);
 
             if (this.cy.nodes("[id='" + node_data.id + "']").size() == 0) {
                 new_nodes.push(node_data);
@@ -190,15 +169,15 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
                 data: node
             };
 
-            if (coordinate_fn !== undefined) {
-                el.position = coordinate_fn(num_nodes, index, 100);
+            if (params.coordinate_fn !== undefined) {
+                el.position = params.coordinate_fn(num_nodes, index, 100);
             }
 
             elements.push(el);
         }, this);
 
         Ext.each(params.edge_rows, function(row) {
-            var edge_data = data_fn(row);
+            var edge_data = params.data_fn(row);
 
             if (this.cy.edges("[id='" + edge_data.id + "']").size() == 0) {
                 var edge_element = {};
@@ -234,11 +213,7 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
         }
 
         var node = selected[0];
-        var node_id_split = node.data().id.split('/');
-        var node_id = node_id_split[node_id_split.length - 1];
-
-        var graph_uri = Ext.getCmp('graph_database_combo').getValue();
-        var query_uri = graph_uri + '/neighbours?query=' + node_id;
+        var query_uri = node.data().uri + '?level=2';
 
         Ext.Ajax.request({
             method: 'get',
@@ -249,11 +224,12 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
 
                 this.addElements({
                     node_rows: json.data.nodes,
-                    edge_rows: json.data.edges
-                }, function(x) {return x;}, this.createCircularCoordFn(node.position()));
+                    edge_rows: json.data.edges,
+                    data_fn: function(x) {return x;},
+                    coordinate_fn: this.createCircularCoordFn(node.position())
+                });
             }
-        })
-        
+        });
     },
 
     createCircularCoordFn: function(base) {
@@ -263,7 +239,7 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
             return {
                 x: base.x + dist * (Math.cos(rad) - Math.sin(rad)),
                 y: base.y + dist * (Math.sin(rad) + Math.cos(rad))
-            }
-        }
+            };
+        };
     }
 });
