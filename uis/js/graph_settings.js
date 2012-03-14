@@ -64,11 +64,9 @@ org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect = Ext.extend(O
         		select: {
         			scope: this,
         			fn: function(combo, value) {
-                        var meta_uri = value.data.uri + '/metadata';
-
                         Ext.Ajax.request({
-                            method:"get",
-                            url:meta_uri,
+                            method:"GET",
+                            url: value.data.uri + '/metadata',
                             scope:this,
                             success:function (o) {
                                 var json,
@@ -253,20 +251,22 @@ org.systemsbiology.hukilau.components.queries.NodeQuery = Ext.extend(Ext.Panel, 
 								var node_prop = this.propCombo.getValue();
 								var query_term = this.queryTermField.getValue();
 								var level = this.traversalCombo.getValue();
-
-								var query_uri = this.graph_uri + '/query?query={' + node_prop + '=\"' + query_term + '\"}' +
-												'&level=' + level +
-												'&nodeLabel=' + node_prop;
-
+                                var selectedWorkspace = this.workspace_container.getWorkspace(this.graph_id);
                                 Ext.Ajax.request({
-                                    method: 'get',
-                                    url: query_uri,
+                                    method: "GET",
+                                    url: this.graph_uri + "/query",
+                                    params: {
+                                        query: Ext.util.encode({ node_prop: query_term }),
+                                        level: level,
+									    nodeLabel: node_prop
+                                    },
                                     scope: this,
                                     success: function(o) {
-                                        this.workspace_container.getWorkspace(this.graph_id).insertResultTab(Ext.util.JSON.decode(o.responseText));
+                                        var data = Ext.util.JSON.decode(o.responseText);
+                                        selectedWorkspace.insertResultTab(data);
                                     },
                                     failure: function() {
-                                        this.workspace_container.getWorkspace(this.graph_id).insertMessageTab("Query failed");
+                                        selectedWorkspace.insertMessageTab("Query failed");
                                     }
                                 });
 							}

@@ -85,23 +85,21 @@ org.systemsbiology.hukilau.components.queries.FilterQuery = Ext.extend(Object, {
 	    		}
 	    	});
 
-			var query_uri = this.graph_uri + '/filter';
+            var selectedWorkspace = this.workspace_container.getWorkspace(this.graph_id);
 
             Ext.Ajax.request({
-                method: 'post',
-                url: query_uri,
+                method: "POST",
+                url: this.graph_uri + '/filter',
                 params: {
-                    filter_config: Ext.encode({
-                        nodes: node_filters,
-                        edges: []
-                    })
+                    filter_config: Ext.encode({ nodes: node_filters, edges: [] })
                 },
                 scope: this,
                 success: function(o) {
-                    this.workspace_container.getWorkspace(this.graph_id).insertResultTab(Ext.util.JSON.decode(o.responseText));
+                    var data = Ext.util.JSON.decode(o.responseText);
+                    selectedWorkspace.insertResultTab(data);
                 },
                 failure: function() {
-                    this.workspace_container.getWorkspace(this.graph_id).insertMessageTab("Query failed");
+                    selectedWorkspace.insertMessageTab("Query failed");
                 }
             });
     	};
