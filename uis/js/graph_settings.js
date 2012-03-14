@@ -1,14 +1,13 @@
 Ext.ns('org.systemsbiology.hukilau.components.queries');
 
 org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect = Ext.extend(Object, {
-    container_title: undefined,
+    graphsUri: "/addama/graphs",
+    container_title: "Graph Database",
     query_tab_panel: undefined,
     data_schema: {},
 
     constructor: function(config) {
-        Ext.apply(this, config, {
-            container_title: "Graph Database"
-        });
+        Ext.apply(this, config);
 
         this.graphdb_panel = this.createPanel();
     },
@@ -57,11 +56,7 @@ org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect = Ext.extend(O
 			triggerAction: 'all',
 			store: new Ext.data.JsonStore({
 				autoLoad: true,
-				proxy: new Ext.data.HttpProxy({
-					url: '/addama/graphs',
-					method: 'GET'
-				}),
-
+				proxy: new Ext.data.HttpProxy({ url: this.graphsUri, method: "GET" }),
 				root: 'items',
 				fields: ['label', 'uri', 'id']
             }),

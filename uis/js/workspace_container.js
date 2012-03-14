@@ -1,11 +1,12 @@
 Ext.ns('org.systemsbiology.hukilau.components');
 
 org.systemsbiology.hukilau.components.WorkspaceContainer = Ext.extend(Ext.TabPanel,{
+    graphStylesUri: "/addama/stores/graphStyles",
+    workspaces: {},
+    graph_styles: {},
+
     constructor: function(config) {
-        Ext.apply(this, config, {
-            workspaces: {},
-            graph_styles: {}
-        });
+        Ext.apply(this, config);
 
         org.systemsbiology.hukilau.components.WorkspaceContainer.superclass.constructor.apply(this, arguments);
 
@@ -58,21 +59,17 @@ org.systemsbiology.hukilau.components.WorkspaceContainer = Ext.extend(Ext.TabPan
     },
 
     loadStyleObjects: function() {
-        var styles = {};
-
         Ext.Ajax.request({
-            method: 'get',
-            url: '/addama/stores/graphStyles/',
+            method: "GET",
+            url: this.graphStylesUri,
             scope: this,
             success: function(o) {
                 var data = Ext.util.JSON.decode(o.responseText);
                 Ext.each(data.items, function(item) {
-                    styles[item.id] = item.style;
-                });
+                    this.graph_styles[item.id] = item.style;
+                }, this);
             }
         });
-
-        this.graph_styles = styles;
     },
 
     getGraphStyle: function(graph_id) {
