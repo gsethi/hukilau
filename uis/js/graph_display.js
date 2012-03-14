@@ -213,11 +213,13 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
         }
 
         var node = selected[0];
-        var query_uri = node.data().uri + '?level=2';
 
         Ext.Ajax.request({
-            method: 'get',
-            url: query_uri,
+            method: "GET",
+            url: node.data().uri,
+            params: {
+                level: 2
+            },
             scope: this,
             success: function(d) {
                 var json = Ext.util.JSON.decode(d.responseText);
