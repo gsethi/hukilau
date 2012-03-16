@@ -1,7 +1,7 @@
 Ext.onReady(function() {
     var workspaceContainer = new org.systemsbiology.hukilau.components.WorkspaceContainer({
         region: "center",
-                tabPosition: "top",
+        tabPosition: "top",
         graphStylesUri: "/graphStyles.json"
     });
 
