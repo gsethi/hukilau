@@ -3,7 +3,9 @@ package org.systemsbiology.cancerregulome.hukilau.rest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
+import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.index.RelationshipIndex;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
@@ -31,11 +33,7 @@ import org.systemsbiology.cancerregulome.hukilau.utils.FilterUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
@@ -144,16 +142,21 @@ public class QueryController implements InitializingBean {
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
 
-        NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNode);
+        NodeMaps nodeMaps = traverseFrom(traversalLevel,null, searchNode);
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/nodes");
 
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
     }
 
+    //query is a JSONObject to define the nodes and relationships to query for each level of the query
+    //ex: {nodes:[{"type":"gene"}],relationships:[{"type":"ngd",direction:"out"}]
+    //nodeSet is a JSONObject to define the nodes to start the query from
+    //ex:{"name":"gene1","text":"thisisit"}
     @RequestMapping(value = "/**/graphs/{graphDbId}/query", method = RequestMethod.GET)
     protected ModelAndView queryGraph(HttpServletRequest request,
                                       @PathVariable("graphDbId") String graphDbId,
-                                      @RequestParam("query") String query) throws Exception {
+                                      @RequestParam("query") String query,
+                                      @RequestParam("nodeSet") String nodeSet) throws Exception {
         // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
 
@@ -161,37 +164,101 @@ public class QueryController implements InitializingBean {
             throw new InvalidSyntaxException("missing 'query' object");
         }
 
-        JSONObject queryJson = new JSONObject(query);
+        JSONObject nodeSetJSON = new JSONObject(nodeSet);
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
 
         ArrayList<Node> searchNodes = new ArrayList<Node>();
-        Iterator itr = queryJson.keys();
+        Iterator itr = nodeSetJSON.keys();
         while (itr.hasNext()) {
             String key = (String) itr.next();
-            String value = queryJson.getString(key);
+            String value = nodeSetJSON.getString(key);
             searchNodes.add(nodeIdx.get(key, value).getSingle());
         }
 
-        NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNodes.toArray(new Node[searchNodes.size()]));
+        JSONObject queryJson = new JSONObject(query);
+
+        NodeMaps nodeMaps = traverseFrom(traversalLevel,queryJson, searchNodes.toArray(new Node[searchNodes.size()]));
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/query");
 
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
     }
 
-    //retrieves relationships amongst all nodes specified in the nodeSet parameter.  nodeset is a JSONArray containing
-    //JSONObjects with the node key and node value to lookup specific nodes.
-    @RequestMapping(value = "/**/graphs/{graphDBId}/relationships/query", method = RequestMethod.GET)
-    protected ModelAndView retrieveRelationships(HttpServletRequest request, @PathVariable("graphDbId") String graphDbId,
-                                                @RequestParam("nodeSet") String nodeSet) throws Exception {
+     //retrieves nodes that are connected to the initial nodeSet by the set of relationships in the relationshipSet
+    //relationshipSet is the list of types of relationships to traverse out to attached nodes
+    //ex: [{"name":"ngd"},{"name":"domine"}]
+    //if relationshipSet is empty, then all relationship types are used
+    @RequestMapping(value = "/**/graphs/{graphDBId}/nodes/query", method = RequestMethod.GET)
+    protected ModelAndView retrieveNodesByRelationship(HttpServletRequest request, @PathVariable("graphDBId") String graphDbId,
+                                                       @RequestParam("nodeSet") String nodeSet,
+                                                @RequestParam("relationshipSet") String relationshipSet) throws Exception {
 
         if (isEmpty(nodeSet)) {
             throw new InvalidSyntaxException("missing 'nodeSet' object");
         }
 
         JSONArray nodeSetJson = new JSONArray(nodeSet);
+
+        List<RelationshipType> relationshipList = new ArrayList<RelationshipType>();
+        if(!isEmpty(relationshipSet)){
+            JSONArray relationshipSetJson = new JSONArray(relationshipSet);
+            for(int i=0; i< relationshipSetJson.length(); i++){
+                JSONObject relObj = relationshipSetJson.getJSONObject(i);
+                relationshipList.add(DynamicRelationshipType.withName((String) relObj.get("name")));
+
+            }
+        }
+
+        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        IndexManager indexMgr = graphDB.index();
+        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
+        RelationshipIndex relIdx = indexMgr.forRelationships(relIdxById.get(graphDbId));
+
+        //get all node objects from index
+        List<Node> nodeList = new ArrayList<Node>();
+        for(int i=0; i< nodeSetJson.length(); i++){
+            JSONObject nodeItem = (JSONObject) nodeSetJson.get(i);
+            String key = (String)nodeItem.keys().next();
+            nodeList.add(nodeIdx.get(key, nodeItem.get(key)).getSingle());
+        }
+
+        //get all relationships between the nodes, nodeMaps will be updated.
+        NodeMaps nodeMaps = NetworkOps.getRelatedNodes(nodeList, relationshipList);
+
+        String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/nodes");
+        return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+
+
+
+    }
+
+    //retrieves relationships amongst all nodes specified in the nodeSet parameter.
+    // nodeset is a JSONArray containing JSONObjects with the node key and node value to lookup specific nodes.
+    //ex: [{"name":"fbxw7"}]
+    //relationshipSet is the list of types of relationships to return, if none specified, then all types are returned
+    //ex: [{"name":"ngd"},{"name":"domine"}]
+    @RequestMapping(value = "/**/graphs/{graphDBId}/relationships/query", method = RequestMethod.GET)
+    protected ModelAndView retrieveRelationships(HttpServletRequest request, @PathVariable("graphDBId") String graphDbId,
+                                                @RequestParam("nodeSet") String nodeSet,
+                                                @RequestParam("relationshipSet") String relationshipSet) throws Exception {
+
+        if (isEmpty(nodeSet)) {
+            throw new InvalidSyntaxException("missing 'nodeSet' object");
+        }
+
+        JSONArray nodeSetJson = new JSONArray(nodeSet);
+
+        Map<RelationshipType,RelationshipType> relationshipMap = new HashMap<RelationshipType, RelationshipType>();
+        if(!isEmpty(relationshipSet)){
+            JSONArray relationshipSetJson = new JSONArray(relationshipSet);
+            for(int i=0; i< relationshipSetJson.length(); i++){
+                JSONObject relObj = relationshipSetJson.getJSONObject(i);
+                relationshipMap.put(DynamicRelationshipType.withName((String) relObj.get("name")), DynamicRelationshipType.withName((String) relObj.get("name")));
+
+            }
+        }
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
@@ -207,7 +274,7 @@ public class QueryController implements InitializingBean {
         }
 
         //get all relationships between the nodes, nodeMaps will be updated.
-        NetworkOps.getRelationships(nodeMaps, relIdx, executorService);
+        NetworkOps.getRelationships(nodeMaps, relIdx, relationshipMap, executorService);
 
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/relationships");
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);

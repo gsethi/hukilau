@@ -28,8 +28,9 @@ public class Neo4jGraphDbMappingsHandler extends MappingPropertyByIdContainer<Ab
             String location = mapping.JSON().getString("location");
              AbstractGraphDatabase graphDb;
 
-            JSONObject configMapping = mapping.JSON().getJSONObject("dbConfig");
-            if(configMapping != null ){
+            if(mapping.JSON().has("dbConfig")){
+                JSONObject configMapping = mapping.JSON().getJSONObject("dbConfig");
+
                 Map<String,String> dbConfigMap = new HashMap<String, String>();
 
                 //create db configuration map

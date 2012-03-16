@@ -11,11 +11,11 @@ import java.util.logging.Logger;
 public class DatabaseShutdownHookThread extends Thread {
     private static final Logger log = Logger.getLogger(DatabaseShutdownHookThread.class.getName());
 
-    private final Database database;
+    private final AbstractGraphDatabase database;
 
     public DatabaseShutdownHookThread(AbstractGraphDatabase graphDb) {
-        this.database = new Database(graphDb);
-        this.database.startup();
+        this.database = graphDb;
+
     }
 
     public void run() {
