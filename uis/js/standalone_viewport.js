@@ -1,7 +1,7 @@
 Ext.onReady(function() {
     var workspaceContainer = new org.systemsbiology.hukilau.components.WorkspaceContainer({
         region: "center",
-        graphStylesUri: "/addama/stores/graphStyles"
+        graphStylesUri: "/graphStyles.json"
     });
 
     var graphQueryTabs = new Ext.TabPanel();
@@ -9,14 +9,13 @@ Ext.onReady(function() {
     var graphDBSelect = new org.systemsbiology.hukilau.components.queries.GraphDatabaseSelect({
         query_tab_panel: graphQueryTabs,
         workspace_container: workspaceContainer,
-        graphsUri: "/addama/graphs"
+        graphsUri: "/hukilau-svc/graphs"
     });
 
     new Ext.Viewport({
         layout:'border',
         renderTo:Ext.getBody(),
         items:[
-            new org.systemsbiology.addama.js.TopBarToolbar({ region:'north', height:30 }),
             {
                 xtype:'panel',
                 region:'west',
