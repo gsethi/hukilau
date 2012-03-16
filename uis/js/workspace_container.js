@@ -4,6 +4,7 @@ org.systemsbiology.hukilau.components.WorkspaceContainer = Ext.extend(Ext.TabPan
     graphStylesUri: "/addama/stores/graphStyles",
     workspaces: {},
     graph_styles: {},
+    tabPosition: "bottom",
 
     constructor: function(config) {
         Ext.apply(this, config);
@@ -15,7 +16,6 @@ org.systemsbiology.hukilau.components.WorkspaceContainer = Ext.extend(Ext.TabPan
 
     initComponent: function() {
         Ext.apply(this, {
-            tabPosition: 'bottom',
             activeItem: 0,
             items: [
                 {
