@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static java.lang.Long.parseLong;
-import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.substringBeforeLast;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
 import static org.systemsbiology.addama.commons.web.utils.HttpIO.getURI;
@@ -142,15 +141,9 @@ public class QueryController implements InitializingBean {
     @RequestMapping(value = "/**/graphs/{graphDbId}/query", method = RequestMethod.GET)
     protected ModelAndView queryGraph(HttpServletRequest request,
                                       @PathVariable("graphDbId") String graphDbId,
-                                      @RequestParam("query") String query) throws Exception {
+                                      @RequestParam("query") JSONObject queryJson) throws Exception {
         // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
-
-        if (isEmpty(query)) {
-            throw new InvalidSyntaxException("missing 'query' object");
-        }
-
-        JSONObject queryJson = new JSONObject(query);
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
@@ -161,7 +154,6 @@ public class QueryController implements InitializingBean {
         while (itr.hasNext()) {
             String key = (String) itr.next();
             String value = queryJson.getString(key);
-
             for (Node node : nodeIdx.get(key, value)) {
                 searchNodes.add(node);
             }

@@ -252,11 +252,14 @@ org.systemsbiology.hukilau.components.queries.NodeQuery = Ext.extend(Ext.Panel, 
 								var query_term = this.queryTermField.getValue();
 								var level = this.traversalCombo.getValue();
                                 var selectedWorkspace = this.workspace_container.getWorkspace(this.graph_id);
+                                var queryJson = {};
+                                queryJson[node_prop] = query_term;
+
                                 Ext.Ajax.request({
                                     method: "GET",
                                     url: this.graph_uri + "/query",
                                     params: {
-                                        query: Ext.util.JSON.encode({ node_prop: query_term }),
+                                        query: Ext.util.JSON.encode(queryJson),
                                         level: level,
 									    nodeLabel: node_prop
                                     },
