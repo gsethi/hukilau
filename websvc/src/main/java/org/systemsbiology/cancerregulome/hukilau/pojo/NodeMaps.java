@@ -32,6 +32,9 @@ public class NodeMaps {
      * Public Methods
      */
     public void addNode(Node node) {
+        if(this.nodesById.containsKey(node.getId()))
+            return;     //don't want to get all properties again, if this is already in the map
+
         this.nodesById.put(node.getId(), node);
         for (String propKey : node.getPropertyKeys()) {
             if (!this.nodeProperties.containsKey(propKey)) {
@@ -41,6 +44,9 @@ public class NodeMaps {
     }
 
     public void addRelationship(Relationship relationship) {
+        if(this.relationshipsById.containsKey(relationship.getId()))
+            return;  //don't want to get all properties again, if this is already in the map
+
         this.relationshipsById.put(relationship.getId(), relationship);
         for (String propKey : relationship.getPropertyKeys()) {
             if (!this.relationshipProperties.containsKey(propKey)) {

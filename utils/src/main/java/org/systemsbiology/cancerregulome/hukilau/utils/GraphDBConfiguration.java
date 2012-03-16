@@ -11,7 +11,7 @@ import java.io.*;
  */
 public class GraphDBConfiguration {
     public static JSONObject loadConfiguration() throws Exception {
-        return loadConfiguration("graphDB.config");
+        return loadFromPath("graphDB.config");
     }
 
     public static JSONObject loadConfiguration(String configFile) throws Exception {
