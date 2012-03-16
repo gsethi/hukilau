@@ -256,7 +256,7 @@ org.systemsbiology.hukilau.components.queries.NodeQuery = Ext.extend(Ext.Panel, 
                                     method: "GET",
                                     url: this.graph_uri + "/query",
                                     params: {
-                                        query: Ext.util.encode({ node_prop: query_term }),
+                                        query: Ext.util.JSON.encode({ node_prop: query_term }),
                                         level: level,
 									    nodeLabel: node_prop
                                     },
