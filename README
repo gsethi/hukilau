@@ -1,0 +1,56 @@
+Hukilau Standalone Deployment :: http://hukilau.googlecode.com
+
+This software is offered under the GNU Lesser GPL open source license.
+
+Please contact codefor@systemsbiology.org for more information.
+
+================================================================
+Creating a Database
+================================================================
+1. Create Graph Database import configuration from template in config/graphDB.config
+2. Configure Graph Database import configuration file (example.config)
+3. Execute import utility:
+    java -jar lib/DBImport.jar graphDB.config
+
+================================================================
+Starting the Web Service
+================================================================
+1. Modify the service configuration to point at the path to your database
+    $TOMCAT_HOME/lib/services/hukilau-svc.config
+2. Add a service mapping for your new database
+    {
+        family: "/graphs",
+        label: "Hukilau Graph Database Service",
+        mappings: [
+            {
+                id: "test_db",
+                label: "Test Database",
+                location: "/local/hukilau/graphdbs/test.db"
+            },
+            {
+                id: "example_db",
+                label: "New Example Database",
+                location: "/local/path/to/your/new/database/example.db"
+            }
+        ]
+    }
+3. Start tomcat server
+    $TOMCAT_HOME/bin/startup.sh
+
+NOTE:
+   To deploy a new database, or edit a database mapping, when TOMCAT is already running:
+      touch $TOMCAT_HOME/webapps/hukilau-svc.war
+
+================================================================
+Accessing Web Application
+================================================================
+   Point your browser at http://localhost:8080/standalone.html
+   To change the HTTP port, modify $TOMCAT_HOME/conf/server.xml
+   Follow instructions here:  http://tomcat.apache.org/tomcat-7.0-doc/setup.html
+
+================================================================
+Modifying Web Application
+================================================================
+   All content for the web application is served from $TOMCAT_HOME/webapps/ROOT
+   Any changes will be immediately available in the browser (if tomcat is running)
+
