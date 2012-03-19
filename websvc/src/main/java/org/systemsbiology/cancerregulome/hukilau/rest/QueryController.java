@@ -62,7 +62,7 @@ public class QueryController implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         this.serviceConfig.visit(new Neo4jGraphDbMappingsHandler(graphDbsById));
         this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(labelsById, "label"));
-        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(nodeIdxById, "nodeIdx"));
+        this.serviceConfig.visit(new StringPropertyByIdMappingsHandler(nodeIdxById, "nodeIdx", "genNodeIdx"));
         this.serviceConfig.visit(new NetworkMetadataMappingsHandler(networkMetadataById));
     }
 
