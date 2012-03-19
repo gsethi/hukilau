@@ -28,7 +28,7 @@ Starting the Web Service
 >>            {
 >>                id: "test_db",
 >>                label: "Test Database",
->>               location: "/local/hukilau/graphdbs/test.db"
+>>                location: "/local/hukilau/graphdbs/test.db"
 >>            }
             ,
             {
@@ -42,6 +42,9 @@ Starting the Web Service
 3. Start tomcat web application server
     $TOMCAT_HOME/bin/startup.sh
 
+4. Monitor tomcat log at
+    $TOMCAT_HOME/logs/catalina.out
+
 NOTE:
    To deploy a new database, or edit a database mapping, while TOMCAT is already running:
       touch $TOMCAT_HOME/webapps/hukilau-svc.war
@@ -53,8 +56,26 @@ NOTE:
 Accessing Web Application
 ================================================================
    Point your browser at http://localhost:8080/standalone.html
+
    To change the HTTP port, modify $TOMCAT_HOME/conf/server.xml
    Follow instructions here:  http://tomcat.apache.org/tomcat-7.0-doc/setup.html
+
+Sample Query:
+1. Select "Test Database" from Graph drop-down menu
+2. Select "Node Query" tab
+3. Select "sco" from "Node Type" drop-down menu
+4. Select "gene_symbol" from "Node Property" drop-down menu
+5. Enter "CLB5" in "Query Term" text box
+6. Select "2 nodes" from "Traversal" drop-down menu
+7. Press "Query" button
+
+Results should show up on the right panel
+
+View Results in Graph:
+1. Select nodes from grid panel
+2. Press "Add Nodes" button
+3. Select "Graph" tab
+
 
 ================================================================
 Modifying Web Application
