@@ -35,7 +35,11 @@ public class DBImport {
     private static NetworkConfiguration networkConfiguration;
 
     public static void main(String[] args) throws Exception {
-        networkConfiguration = new NetworkConfiguration(loadConfiguration());
+        if (args != null && args.length > 0) {
+            networkConfiguration = new NetworkConfiguration(loadConfiguration(args[0]));
+        } else {
+            networkConfiguration = new NetworkConfiguration(loadConfiguration());
+        }
 
         batchInserter = new BatchInserterImpl(networkConfiguration.getDatabaseRootPath());
         BatchInserterIndexProvider indexProvider = new LuceneBatchInserterIndexProvider(batchInserter);

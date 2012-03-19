@@ -23,7 +23,7 @@ public class NetworkConfigurationTest {
 
     @Test
     public void good() throws Exception {
-        NetworkConfiguration nc = new NetworkConfiguration(loadConfiguration("networkConfigurationTest.json"));
+        NetworkConfiguration nc = new NetworkConfiguration(loadConfiguration("target/test-classes/networkConfigurationTest.json"));
         for (int i = 0; i < 100; i++) nc.incrementNodes();
         for (int i = 0; i < 1000; i++) nc.incrementEdges();
 

@@ -2,7 +2,7 @@ package org.systemsbiology.cancerregulome.hukilau.utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 
 import java.io.*;
 
@@ -15,7 +15,7 @@ public class GraphDBConfiguration {
     }
 
     public static JSONObject loadConfiguration(String configFile) throws Exception {
-        ClassPathResource resource = new ClassPathResource(configFile);
+        FileSystemResource resource = new FileSystemResource(configFile);
         return jsonFromInputStream(resource.getInputStream());
     }
 
