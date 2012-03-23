@@ -2,6 +2,7 @@ package org.systemsbiology.cancerregulome.hukilau.configs;
 
 import org.json.JSONObject;
 import org.neo4j.kernel.AbstractGraphDatabase;
+import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.neo4j.kernel.EmbeddedReadOnlyGraphDatabase;
 import org.neo4j.kernel.HighlyAvailableGraphDatabase;
 import org.systemsbiology.addama.jsonconfig.Mapping;
@@ -44,10 +45,10 @@ public class Neo4jGraphDbMappingsHandler extends MappingPropertyByIdContainer<Ab
                 if(configMapping.get("org.neo4j.server.database.mode") != null && ((String)configMapping.get("org.neo4j.server.database.mode")).equalsIgnoreCase("HA"))
                     graphDb = new HighlyAvailableGraphDatabase(location,dbConfigMap);
                 else
-                    graphDb = new EmbeddedReadOnlyGraphDatabase(location,dbConfigMap);
+                    graphDb = new EmbeddedGraphDatabase(location,dbConfigMap);
             }
             else
-                graphDb = new EmbeddedReadOnlyGraphDatabase(location);
+                graphDb = new EmbeddedGraphDatabase(location);
 
             getRuntime().addShutdownHook(new DatabaseShutdownHookThread(graphDb));
             addValue(mapping, graphDb);

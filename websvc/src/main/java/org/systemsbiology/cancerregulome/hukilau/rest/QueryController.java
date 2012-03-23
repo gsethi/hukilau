@@ -3,14 +3,14 @@ package org.systemsbiology.cancerregulome.hukilau.rest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
-import org.neo4j.graphdb.DynamicRelationshipType;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.index.RelationshipIndex;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.graphdb.index.IndexManager;
 import org.neo4j.kernel.AbstractGraphDatabase;
+import org.neo4j.server.rest.domain.RelationshipDirection;
+import org.neo4j.server.rest.web.DatabaseActions;
 import org.springframework.aop.ThrowsAdvice;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Controller;
@@ -32,6 +32,8 @@ import org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView;
 import org.systemsbiology.cancerregulome.hukilau.utils.FilterUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedOutputStream;
 import java.net.URLDecoder;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -42,6 +44,7 @@ import org.apache.lucene.index.*;
 
 import static org.apache.commons.lang.StringUtils.*;
 import static org.springframework.web.bind.ServletRequestUtils.getIntParameter;
+import static org.systemsbiology.addama.commons.web.utils.HttpIO.pipe_close;
 import static org.systemsbiology.cancerregulome.hukilau.utils.NetworkOps.traverseFrom;
 import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.BASE_URI;
 import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.NODE_MAPS;
@@ -130,6 +133,111 @@ public class QueryController implements InitializingBean {
         return new ModelAndView(new JsonView()).addObject("json", networkMetadataById.get(graphDbId));
     }
 
+    @RequestMapping(value = "/**/graphs/{graphDbId}/relationships/{nodeName}", method = RequestMethod.POST)
+    protected ModelAndView handleNodeInsert(HttpServletRequest request, @PathVariable("graphDbId") String graphDbId,@PathVariable("nodeName") String nodeName) throws Exception {
+
+
+        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        IndexManager indexMgr = graphDB.index();
+        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
+        Index<Relationship> relIdx = indexMgr.forRelationships(relIdxById.get(graphDbId));
+
+        Node node = nodeIdx.get("name",nodeName).getSingle();
+
+        NetworkOps.insertGraphNodeData(nodeName,Boolean.parseBoolean(request.getParameter("alias")),graphDB, nodeIdx,relIdx);
+        NodeMaps nodeMaps = new NodeMaps();
+
+        String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/relationships");
+
+        return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+    }
+
+    @RequestMapping(value = "/**/graphs/{graphDbId}/nodes/export/{nodeName}", method = RequestMethod.GET)
+      protected ModelAndView exportNetwork(HttpServletRequest request, HttpServletResponse response, @PathVariable("nodeName") String nodeName,
+                                           @PathVariable("graphDbId") String graphDbId) throws Exception {
+
+          String dataFormat = request.getParameter("type");
+          if (dataFormat.toLowerCase().equals("csv")) {
+              response.setContentType("text/csv");
+              response.setHeader("Content-Disposition", "attachment;filename=nodes.csv");
+          } else if (dataFormat.toLowerCase().equals("tsv")) {
+              response.setContentType("text/tsv");
+              response.setHeader("Content-Disposition", "attachment;filename=nodes.tsv");
+          }
+
+
+
+        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        IndexManager indexMgr = graphDB.index();
+        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
+        RelationshipIndex relIdx= indexMgr.forRelationships(relIdxById.get(graphDbId));
+
+        Node searchNode = nodeIdx.get("name",nodeName).getSingle();
+
+          boolean alias = new Boolean(request.getParameter("alias")).booleanValue();
+         String relType="ngd";
+        if(alias){
+            relType="ngd_alias";
+        }
+
+          try {
+
+              BufferedOutputStream out = new BufferedOutputStream(response.getOutputStream());
+
+              String csvLine = "gene,singlecount,ngd,combocount\n";
+              out.write(csvLine.getBytes());
+
+              csvLine = nodeName + "," + searchNode.getProperty("termcount", 0) + ",0," + searchNode.getProperty("termcount", 0) + "\n";
+              out.write(csvLine.getBytes());
+
+
+              //go thru ngd relationships and create an array of all node objects that have an ngd distance from the search term
+               IndexHits<Relationship> ngdHits = relIdx.get("relType", relType, searchNode, null);
+              for (Relationship rel : ngdHits) {
+                  JSONObject relJson = new JSONObject();
+                  Node gene = rel.getEndNode();
+                  csvLine = gene.getProperty("name") + "," + gene.getProperty("termcount", 0) + "," + rel.getProperty("ngd") + "," + rel.getProperty("combocount") + "\n";
+                  out.write(csvLine.getBytes());
+              }
+
+
+              out.flush();
+              out.close();
+
+          } catch (Exception e) {
+              log.info("exception occurred: " + e.getMessage());
+              return null;
+          }
+
+          return null;
+      }
+
+      @RequestMapping(value = "/exportGraph", method = RequestMethod.POST)
+      protected ModelAndView exportGraph(HttpServletRequest request, HttpServletResponse response) throws Exception {
+          String requestUri = request.getRequestURI();
+          log.info(requestUri);
+          String dataFormat = request.getParameter("type");
+          log.info(request.getRequestURI() + "," + request.getMethod() + dataFormat);
+
+          if (dataFormat.toLowerCase().equals("png")) {
+              response.setContentType("image/png");
+              response.setHeader("Content-Disposition", "attachment;filename=graph.png");
+          } else if (dataFormat.toLowerCase().equals("svg")) {
+              response.setContentType("image/svg+xml");
+              response.setHeader("Content-Disposition", "attachment;filename=graph.svg");
+          } else if (dataFormat.toLowerCase().equals("pdf")) {
+              response.setContentType("application/pdf");
+              response.setHeader("Content-Disposition", "attachment;filename=graph.pdf");
+          }
+
+          log.info("input stream length: " + request.getContentLength());
+
+          pipe_close(request.getInputStream(), response.getOutputStream());
+          return null;
+      }
+
+
+
     @RequestMapping(value = "/**/graphs/{graphDbId}/nodes/{nodeId}", method = RequestMethod.GET)
     protected ModelAndView retrieveNode(HttpServletRequest request,
                                         @PathVariable("graphDbId") String graphDbId,
@@ -199,6 +307,8 @@ public class QueryController implements InitializingBean {
             throw new InvalidSyntaxException("missing 'nodeSet' object");
         }
 
+        log.info("nodeSet: " + nodeSet);
+        log.info("relationshipSet: " + relationshipSet);
         JSONArray nodeSetJson = new JSONArray(nodeSet);
 
         List<RelationshipType> relationshipList = new ArrayList<RelationshipType>();
@@ -207,21 +317,24 @@ public class QueryController implements InitializingBean {
             for(int i=0; i< relationshipSetJson.length(); i++){
                 JSONObject relObj = relationshipSetJson.getJSONObject(i);
                 relationshipList.add(DynamicRelationshipType.withName((String) relObj.get("name")));
-
             }
         }
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
-        RelationshipIndex relIdx = indexMgr.forRelationships(relIdxById.get(graphDbId));
+
 
         //get all node objects from index
         List<Node> nodeList = new ArrayList<Node>();
         for(int i=0; i< nodeSetJson.length(); i++){
             JSONObject nodeItem = (JSONObject) nodeSetJson.get(i);
             String key = (String)nodeItem.keys().next();
-            nodeList.add(nodeIdx.get(key, nodeItem.get(key)).getSingle());
+             log.info("node item: " + nodeItem.get(key));
+            Node node = nodeIdx.get(key,nodeItem.get(key)).getSingle();
+            if(node != null){
+                nodeList.add(nodeIdx.get(key, nodeItem.get(key)).getSingle());
+            }
         }
 
         //get all relationships between the nodes, nodeMaps will be updated.
@@ -236,7 +349,7 @@ public class QueryController implements InitializingBean {
 
     //retrieves relationships amongst all nodes specified in the nodeSet parameter.
     // nodeset is a JSONArray containing JSONObjects with the node key and node value to lookup specific nodes.
-    //ex: [{"name":"fbxw7"}]
+    //ex: [{"name":"fbxw7"},{"name":"skp1"}]
     //relationshipSet is the list of types of relationships to return, if none specified, then all types are returned
     //ex: [{"name":"ngd"},{"name":"domine"}]
     @RequestMapping(value = "/**/graphs/{graphDBId}/relationships/query", method = RequestMethod.GET)
@@ -250,12 +363,12 @@ public class QueryController implements InitializingBean {
 
         JSONArray nodeSetJson = new JSONArray(nodeSet);
 
-        Map<RelationshipType,RelationshipType> relationshipMap = new HashMap<RelationshipType, RelationshipType>();
+        Map<String,String> relationshipMap = new HashMap<String, String>();
         if(!isEmpty(relationshipSet)){
             JSONArray relationshipSetJson = new JSONArray(relationshipSet);
             for(int i=0; i< relationshipSetJson.length(); i++){
                 JSONObject relObj = relationshipSetJson.getJSONObject(i);
-                relationshipMap.put(DynamicRelationshipType.withName((String) relObj.get("name")), DynamicRelationshipType.withName((String) relObj.get("name")));
+                relationshipMap.put((String) relObj.get("name"), (String) relObj.get("name"));
 
             }
         }
@@ -274,8 +387,9 @@ public class QueryController implements InitializingBean {
         }
 
         //get all relationships between the nodes, nodeMaps will be updated.
-        NetworkOps.getRelationships(nodeMaps, relIdx, relationshipMap, executorService);
+        NodeMaps relMap = NetworkOps.getRelationships(nodeMaps, relIdx, relationshipMap, executorService);
 
+        log.info("number of relationships " + relMap.numberOfRelationships());
         String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/relationships");
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
 
