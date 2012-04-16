@@ -383,6 +383,11 @@ public class QueryController implements InitializingBean {
         for(int i=0; i< nodeSetJson.length(); i++){
             JSONObject nodeItem = (JSONObject) nodeSetJson.get(i);
             String key = (String)nodeItem.keys().next();
+            if(key == null || nodeItem.get(key) == null){
+                log.info("item being skipped, since not found in database: " + key);
+                continue;
+            }
+
             nodeMaps.addNode(nodeIdx.get(key, nodeItem.get(key)).getSingle());
         }
 
