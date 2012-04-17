@@ -218,7 +218,8 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
             method: "GET",
             url: node.data().uri,
             params: {
-                level: 2
+                level: 2,
+                filter_config: Ext.encode(this.workspace.filter_config)
             },
             scope: this,
             success: function(d) {

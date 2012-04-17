@@ -50,40 +50,42 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Ext.util.O
 		var node_columns = this.create_node_columns(data.dataSchema.nodes);
         this.node_grid = new Ext.grid.GridPanel({
 		    title: 'Nodes',
-		    region: 'center',
-		    autoScroll: true,
-		    autoWidth: true,
-		    loadMask: true,
-		    disabled: false,
-		    ds: this.node_prop_store,
-		    cm: new Ext.grid.ColumnModel(node_columns),
-		    tbar: [
-		    	{
-		    		text: "Add Nodes",
-                    scope: this,
-		    		handler: function() {
+            region:'center',
+            autoScroll:true,
+            autoWidth:true,
+            loadMask:true,
+            disabled:false,
+            ds:this.node_prop_store,
+            cm:new Ext.grid.ColumnModel(node_columns),
+            tbar:[
+                {
+                    text:"Add Nodes",
+                    scope:this,
+                    handler:function () {
                         var node_rows = this.node_grid.getSelectionModel().getSelections();
-		    			var nodes = {};
+                        var nodes = {};
 
-		    			Ext.each(node_rows, function(row) {
-	    					nodes[row.data.id] = true;
-		    			});
+                        Ext.each(node_rows, function (row) {
+                            nodes[row.data.id] = true;
+                        });
 
                         var filter_fn = function (record) {
-		    				return nodes.hasOwnProperty(record.data.source) && nodes.hasOwnProperty(record.data.target);
-		    			};
+                            return nodes.hasOwnProperty(record.data.source) && nodes.hasOwnProperty(record.data.target);
+                        };
 
-		    			var edge_rows = this.edge_grid.getStore().queryBy(filter_fn);
+                        var edge_rows = this.edge_grid.getStore().queryBy(filter_fn);
 
                         this.fireEvent("addElements", {
-                            node_rows: node_rows,
-                            edge_rows: edge_rows.items,
-                            data_fn: function(x) {return x.data;}
+                            node_rows:node_rows,
+                            edge_rows:edge_rows.items,
+                            data_fn:function (x) {
+                                return x.data;
+                            }
                         });
-		    		}
-		    	}
-		    ]
-		});
+                    }
+                }
+            ]
+        });
 
 		this.add_node_label_fields(data.dataSchema.edges);
 		this.add_node_labels(data.data.edges, data.data.nodes);
@@ -110,38 +112,40 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Ext.util.O
 		    loadMask: true,
 		    disabled: false,
 		    ds: this.edge_prop_store,
-		    cm: new Ext.grid.ColumnModel(edge_columns),
-		    tbar: [
-		    	{
-		    		text: "Add Edges",
-                    scope: this,
-		    		handler: function() {
-		    			var nodes = {};
+            cm:new Ext.grid.ColumnModel(edge_columns),
+            tbar:[
+                {
+                    text:"Add Edges",
+                    scope:this,
+                    handler:function () {
+                        var nodes = {};
 
-		    			var edge_rows = this.edge_grid.getSelectionModel().getSelections();
-		    			Ext.each(edge_rows, function(row) {
-		    				nodes[row.data.source] = true;
-		    				nodes[row.data.target] = true;
-		    			});
+                        var edge_rows = this.edge_grid.getSelectionModel().getSelections();
+                        Ext.each(edge_rows, function (row) {
+                            nodes[row.data.source] = true;
+                            nodes[row.data.target] = true;
+                        });
 
-		    			// Build a filter function for finding the source and target node rows for each edge
+                        // Build a filter function for finding the source and target node rows for each edge
                         var filter_fn = function (record) {
                             return nodes.hasOwnProperty(record.data.id);
-		    			};
+                        };
 
-		    			var node_rows = this.node_grid.getStore().queryBy(filter_fn);
+                        var node_rows = this.node_grid.getStore().queryBy(filter_fn);
 
                         this.fireEvent("addElements", {
-                            node_rows: node_rows.items,
-                            edge_rows: edge_rows,
-                            data_fn: function(x) {return x.data;}
+                            node_rows:node_rows.items,
+                            edge_rows:edge_rows,
+                            data_fn:function (x) {
+                                return x.data;
+                            }
                         });
-		    		}
-		    	}
-		    ]
-		});
+                    }
+                }
+            ]
+        });
 
-		this.container = new Ext.Panel({
+        this.container = new Ext.Panel({
 			title: this.container_title,
 			layout: 'accordion',
 			closable: true,
@@ -167,25 +171,25 @@ org.systemsbiology.hukilau.components.QueryResultDisplay = Ext.extend(Ext.util.O
             var field = meta_data[i];
 
             var col = {
-            	xtype: 'gridcolumn',
+                xtype: 'gridcolumn',
                 header: field.name,
                 type: field.type,
                 dataIndex: field.name
             };
 
             if (field.header) {
-            	col.header = field.header;
+                col.header = field.header;
             }
             else {
-            	col.header = field.name;
+                col.header = field.name;
             }
 
             if (field.hidden) {
-            	col.hidden = true;
-            	col.sortable = false;
+                col.hidden = true;
+                col.sortable = false;
             }
             else {
-            	col.sortable = true;
+                col.sortable = true;
             }
 
             columns.push(col);
