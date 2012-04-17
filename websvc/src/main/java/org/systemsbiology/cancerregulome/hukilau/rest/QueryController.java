@@ -5,6 +5,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.graphdb.index.IndexManager;
@@ -126,23 +127,40 @@ public class QueryController implements InitializingBean {
     @RequestMapping(value = "/**/graphs/{graphDbId}/nodes/{nodeId}", method = RequestMethod.GET)
     protected ModelAndView retrieveNode(HttpServletRequest request,
                                         @PathVariable("graphDbId") String graphDbId,
-                                        @PathVariable("nodeId") String nodeId) throws Exception {
+                                        @PathVariable("nodeId") String nodeId,
+                                        @RequestParam(value="filter_config", required = false) JSONObject filter_config) throws Exception {
         int traversalLevel = getIntParameter(request, "level", 1);
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
         Node targetNode = graphDB.getNodeById(parseLong(nodeId));
 
-        NodeMaps nodeMaps = traverseFrom(traversalLevel, targetNode);
+        NodeMaps resultNodeMaps = traverseFrom(traversalLevel, targetNode);
         String baseUri = substringBeforeLast(getURI(request), "/nodes");
 
-        return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+        if (filter_config != null) {
+            JSONArray node_filter_list = null;
+            JSONArray edge_filter_list = null;
+
+            try {
+                node_filter_list = filter_config.getJSONArray("nodes");
+                edge_filter_list = filter_config.getJSONArray("edges");
+            } catch (JSONException e) {
+                throw new InvalidSyntaxException(e.getMessage());
+            }
+
+            NodeMaps filtered = FilterUtils.filterNodeMaps(resultNodeMaps, node_filter_list, edge_filter_list);
+            return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, filtered).addObject(BASE_URI, baseUri);
+        }
+        else {
+            return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, resultNodeMaps).addObject(BASE_URI, baseUri);
+        }
     }
 
-    @RequestMapping(value = "/**/graphs/{graphDbId}/query", method = RequestMethod.GET)
+    @RequestMapping(value = "/**/graphs/{graphDbId}/query", method = RequestMethod.POST)
     protected ModelAndView queryGraph(HttpServletRequest request,
                                       @PathVariable("graphDbId") String graphDbId,
-                                      @RequestParam("query") JSONObject queryJson) throws Exception {
-        // TODO : Lookup node by name or by ID?
+                                      @RequestParam("query") JSONObject queryJson,
+                                      @RequestParam(value="filter_config", required = false) JSONObject filter_config) throws Exception {
         int traversalLevel = getIntParameter(request, "level", 1);
 
         AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
@@ -154,15 +172,32 @@ public class QueryController implements InitializingBean {
         while (itr.hasNext()) {
             String key = (String) itr.next();
             String value = queryJson.getString(key);
+
             for (Node node : nodeIdx.get(key, value)) {
                 searchNodes.add(node);
             }
         }
 
-        NodeMaps nodeMaps = traverseFrom(traversalLevel, searchNodes.toArray(new Node[searchNodes.size()]));
+        NodeMaps queryNodeMaps = traverseFrom(traversalLevel, searchNodes.toArray(new Node[searchNodes.size()]));
         String baseUri = substringBeforeLast(getURI(request), "/query");
 
-        return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+        if (filter_config != null) {
+            JSONArray node_filter_list = null;
+            JSONArray edge_filter_list = null;
+
+            try {
+                node_filter_list = filter_config.getJSONArray("nodes");
+                edge_filter_list = filter_config.getJSONArray("edges");
+            } catch (JSONException e) {
+                throw new InvalidSyntaxException(e.getMessage());
+            }
+
+            NodeMaps filtered = FilterUtils.filterNodeMaps(queryNodeMaps, node_filter_list, edge_filter_list);
+            return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, filtered).addObject(BASE_URI, baseUri);
+        }
+        else {
+            return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, queryNodeMaps).addObject(BASE_URI, baseUri);
+        }
     }
 
     private AbstractGraphDatabase getGraphDb(String graphDbId) throws ResourceNotFoundException {

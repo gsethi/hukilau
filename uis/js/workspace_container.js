@@ -2,7 +2,6 @@ Ext.ns('org.systemsbiology.hukilau.components');
 
 org.systemsbiology.hukilau.components.WorkspaceContainer = Ext.extend(Ext.TabPanel,{
     graphStylesUri: "/addama/stores/graphStyles",
-    workspaces: {},
     graph_styles: {},
     tabPosition: "bottom",
 
@@ -15,47 +14,39 @@ org.systemsbiology.hukilau.components.WorkspaceContainer = Ext.extend(Ext.TabPan
     },
 
     initComponent: function() {
+        this.workspace_setup = new org.systemsbiology.hukilau.components.WorkspaceSetup({
+            title: 'Workspace Setup',
+            workspace_container: this
+        });
+
         Ext.apply(this, {
+            region: 'center',
             activeItem: 0,
             items: [
-                {
-                    title: "Main",
-                    html: '<div class="query_error">Select a graph database to begin.</div>'
-                }
+                this.workspace_setup
             ]
         });
 
         org.systemsbiology.hukilau.components.WorkspaceContainer.superclass.initComponent.call(this);
     },
 
-    createWorkspace: function(data) {
-        if (!this.workspaces.hasOwnProperty(data.id)) {
-            var workspace = new org.systemsbiology.hukilau.components.Workspace({
-                title: data.label,
-                cytoscape_root_id: 'c_vis',
-                graph_id: data.id,
-                default_visual_style: this.getGraphStyle(data.id)
-            });
+    createWorkspace: function(config) {
+        Ext.apply(config, {
+            default_visual_style: this.getGraphStyle(config.data.id)
+        });
 
-            workspace.on("close", this.handleWorkspaceClosed, this);
+        var workspace = new org.systemsbiology.hukilau.components.Workspace(config);
 
-            this.workspaces[data.id] = workspace;
+        this.add(workspace);
+        this.setActiveTab(workspace);
 
-            this.add(workspace);
-            this.setActiveTab(workspace);
-
-            return workspace;
-        }
+        return workspace;
     },
 
     getWorkspace: function(graph_id) {
         if (this.workspaces.hasOwnProperty(graph_id)) {
             return this.workspaces[graph_id];
         }
-    },
-
-    handleWorkspaceClosed: function(panel) {
-        Ext.destroyMembers(this.workspaces, panel.graph_id);
     },
 
     loadStyleObjects: function() {

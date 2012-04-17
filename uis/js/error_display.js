@@ -1,3 +1,5 @@
+Ext.ns('org.systemsbiology.hukilau.components.queries');
+
 org.systemsbiology.hukilau.components.queries.ErrorDisplay = Ext.extend(Ext.Panel, {
     constructor: function() {
         Ext.apply(this, arguments, {
