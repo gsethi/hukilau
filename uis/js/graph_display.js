@@ -46,8 +46,8 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
     constructor: function(config) {
         Ext.apply(this, config, {
             container_title: "Graph",
-            width: 700,
-            height: 700,
+            width: 1024,
+            height: 1024,
             layout_name: "grid"
         });
 
@@ -61,10 +61,12 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
                 activate: {
                     scope: this,
                     fn: function() {
-                        if (this.cy !== undefined) {
+                        if (this.cy !== undefined && this.update_layout_flag) {
                             this.cy.layout({
                                 name: this.layout_name
                             });
+
+                            this.update_layout_flag = Boolean(false);
                         }
                     }
                 }
@@ -112,8 +114,6 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
                 }
             ]
         });
-        
-
     },
 
     getPanel: function() {
@@ -163,6 +163,7 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
         }, this);
 
         var num_nodes = new_nodes.length;
+
         Ext.each(new_nodes, function(node, index) {
             var el = {
                 group: "nodes",
@@ -189,6 +190,10 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
                 });
             }
         }, this);
+
+        if (elements.length > 0) {
+            this.update_layout_flag = Boolean(true);
+        }
 
         if (this.cy.nodes().size() == 0) {
             this.cy.load(elements);
