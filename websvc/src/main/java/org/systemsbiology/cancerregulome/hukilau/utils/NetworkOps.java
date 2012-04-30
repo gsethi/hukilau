@@ -18,7 +18,9 @@ public class NetworkOps {
         ArrayList<Node> inProcessNodes = new ArrayList<Node>();
 
         for (Node startNode : startNodes) {
+            inProcessNodes.clear();
             inProcessNodes.add(startNode);
+
             for (int i = 0; i < traversalLevel; i++) {
                 for (Node pNode : inProcessNodes) {
                     if (pNode != null) {

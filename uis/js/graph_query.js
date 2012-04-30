@@ -83,10 +83,10 @@ org.systemsbiology.hukilau.components.queries.BasicQuery = Ext.extend(Ext.Panel,
 			store: new Ext.data.JsonStore({
 				fields: ['label', 'value'],
 				data: [
-					{label: '1 node', value: 1},
-					{label: '2 nodes', value: 2},
-					{label: '3 nodes', value: 3},
-					{label: '4 nodes', value: 4}
+                    {label: '0 nodes', value: 1},
+					{label: '1 node', value: 2},
+					{label: '2 nodes', value: 3},
+					{label: '3 nodes', value: 4}
 				]
 			})
 		});
