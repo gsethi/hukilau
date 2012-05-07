@@ -256,6 +256,31 @@ public class QueryController implements InitializingBean {
         return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
     }
 
+    //filter param expects what property to retrieve nodes by: e.g. {"prop":"nodeType","value":"gene"}
+    @RequestMapping(value = "/**/graphs/{graphDbId}/nodes", method = RequestMethod.GET)
+    protected ModelAndView retrieveNodes(HttpServletRequest request,
+                                        @PathVariable("graphDbId") String graphDbId,
+                                        @RequestParam("filter") String filter) throws Exception {
+
+        if (isEmpty(filter)) {
+            throw new InvalidSyntaxException("missing 'filter' object");
+        }
+
+        JSONObject nodeFilterJSONArray = new JSONObject(filter);
+        NodeMaps nodeMaps = new NodeMaps();
+        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        IndexManager indexMgr = graphDB.index();
+        Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
+        IndexHits<Node> nodeHits = nodeIdx.get(nodeFilterJSONArray.getString("prop"),nodeFilterJSONArray.getString("value"));
+        for(Node n : nodeHits){
+            nodeMaps.addNode(n);
+        }
+
+        String baseUri = substringBetween(request.getRequestURI(), request.getContextPath(), "/nodes");
+
+        return new ModelAndView(new JsonNetworkView()).addObject(NODE_MAPS, nodeMaps).addObject(BASE_URI, baseUri);
+    }
+
     //query is a JSONObject to define the nodes and relationships to query for each level of the query
     //ex: {nodes:[{"type":"gene"}],relationships:[{"type":"ngd",direction:"out"}]
     //nodeSet is a JSONObject to define the nodes to start the query from
@@ -283,7 +308,10 @@ public class QueryController implements InitializingBean {
         while (itr.hasNext()) {
             String key = (String) itr.next();
             String value = nodeSetJSON.getString(key);
-            searchNodes.add(nodeIdx.get(key, value).getSingle());
+            IndexHits<Node> nodeHits = nodeIdx.get(key,value);
+            for(Node n : nodeHits){
+                searchNodes.add(n);
+            }
         }
 
         JSONObject queryJson = new JSONObject(query);
@@ -388,7 +416,11 @@ public class QueryController implements InitializingBean {
                 continue;
             }
 
-            nodeMaps.addNode(nodeIdx.get(key, nodeItem.get(key)).getSingle());
+            if(nodeIdx.get(key,nodeItem.get(key)).getSingle() == null){
+                log.info("no item found: " + key);
+            }
+            else
+                nodeMaps.addNode(nodeIdx.get(key, nodeItem.get(key)).getSingle());
         }
 
         //get all relationships between the nodes, nodeMaps will be updated.

@@ -67,12 +67,7 @@ public class NetworkOps {
                     .evaluator(new Evaluator() {
                         @Override
                         public Evaluation evaluate(Path path) {
-                            if(path.lastRelationship() != null && path.lastRelationship().isType(DynamicRelationshipType.withName("ngd")))
-                                log.info("found an ngd relationship!");
-                            else if(path.lastRelationship() != null && !path.lastRelationship().isType(DynamicRelationshipType.withName("domine"))
-                                    && !path.lastRelationship().isType(DynamicRelationshipType.withName("ngd_alias")))
-                                log.info("different relationship: " + path.lastRelationship().getType().toString());
-
+                          
                             if(path.length() == 0){
                                return Evaluation.EXCLUDE_AND_CONTINUE;
                            }
