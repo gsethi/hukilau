@@ -134,15 +134,15 @@ public class DBImport {
             while ((relLine = relFile.readLine()) != null) {
                 String[] relInfo = relLine.split("\t");
 
-                Long sourceNode = nodeIndex.get("name", relInfo[0]).getSingle();
-                Long targetNode = nodeIndex.get("name", relInfo[1]).getSingle();
+                Long sourceNode = nodeIndex.get("name", relInfo[0].trim()).getSingle();
+                Long targetNode = nodeIndex.get("name", relInfo[1].trim()).getSingle();
 
                 if (sourceNode == null || targetNode == null) {
                     if (sourceNode == null) {
-                        log.warning("node: " + relInfo[0] + " not found for relationship");
+                        log.warning("node: " + relInfo[0].trim() + " not found for relationship");
                     }
                     if (targetNode == null) {
-                        log.warning("node: " + relInfo[1] + " not found for relationship");
+                        log.warning("node: " + relInfo[1].trim() + " not found for relationship");
                     }
                     continue;
                 }
@@ -150,7 +150,7 @@ public class DBImport {
                     Map<String, Object> rProperties = map("relType", edgeType);
                     Map<String, Object> iProperties = map("relType", edgeType);
                     for (int i = 2; i < relInfo.length; i++) {
-                        addProperty(columns[i], propTypes, relInfo[i], rProperties, iProperties);
+                        addProperty(columns[i], propTypes, relInfo[i].trim(), rProperties, iProperties);
                     }
                     long rel = batchInserter.createRelationship(sourceNode, targetNode, withName(edgeType), rProperties);
                     relationshipIndex.add(rel, iProperties);

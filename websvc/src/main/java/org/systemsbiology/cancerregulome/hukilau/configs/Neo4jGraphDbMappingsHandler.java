@@ -43,7 +43,7 @@ public class Neo4jGraphDbMappingsHandler extends MappingPropertyByIdContainer<Ab
                 }
 
                 if(configMapping.get("org.neo4j.server.database.mode") != null && ((String)configMapping.get("org.neo4j.server.database.mode")).equalsIgnoreCase("HA"))
-                    graphDb = new HighlyAvailableGraphDatabase(location,dbConfigMap);
+                    graphDb = new EmbeddedGraphDatabase(location,dbConfigMap);
                 else
                     graphDb = new EmbeddedGraphDatabase(location,dbConfigMap);
             }

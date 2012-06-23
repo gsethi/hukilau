@@ -73,7 +73,7 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-enterprise</artifactId>
-            <version>1.6</version>
+            <version>1.8.M03</version>
         </dependency>
 
         <dependency>
