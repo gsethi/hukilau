@@ -108,10 +108,7 @@ org.systemsbiology.hukilau.components.GraphDatabaseSelect = Ext.extend(Ext.Panel
                                 json = Ext.util.JSON.decode(o.responseText);
                                 this.numberOfNodesLabel.setText(json.numberOfNodes);
                                 this.numberOfEdgesLabel.setText(json.numberOfEdges);
-
-                                if (this.workspaceNameField.getValue().length == 0) {
-                                    this.workspaceNameField.setValue(value.data.label);
-                                }
+                                this.workspaceNameField.setValue(value.data.label);
 
                                 this.processDataSchema(json);
 
@@ -169,34 +166,36 @@ org.systemsbiology.hukilau.components.GraphDatabaseSelect = Ext.extend(Ext.Panel
                         text: 'Create workspace',
                         scope: this,
                         handler: function() {
-                            var workspace_name,
-                                node_filters,
-                                edge_filters;
+                            Ext.MessageBox.show({
+                                msg: 'Loading data...',
+                                progressText: 'Loading...',
+                                width: 300,
+                                wait: true
+                            });
 
-                            workspace_name = this.workspaceNameField.getValue();
+                            // Check if the raw data is available for plotting for this graph
+                            var dataset_query = '/addama/datasources/datasets/';
+                            var raw_data_available = false;
 
-                            if (this.node_filter_setup.validateFilters() == false) {
-                                Ext.MessageBox.alert('Error', 'Invalid values in node filter fields.');
-                                this.settings_tab_panel.setActiveTab(this.node_filter_setup.getPanel());
-                                return;
-                            }
+                            Ext.Ajax.request({
+                                url: dataset_query,
+                                scope: this,
+                                success: function(response) {
+                                    var that = this;
+                                    var data = Ext.decode(response.responseText);
 
-                            if (this.edge_filter_setup.validateFilters() == false) {
-                                Ext.MessageBox.alert('Error', 'Invalid values in edge filter fields.');
-                                this.settings_tab_panel.add(this.edge_filter_setup.getPanel());
-                                return;
-                            }
+                                    Ext.each(data.items, function(item) {
+                                        if (item.name == 'expr_' + that.graph_data.id) {
+                                            raw_data_available = true;
+                                            return false;
+                                        }
+                                    });
 
-                            node_filters = this.node_filter_setup.getFilterList();
-                            edge_filters = this.edge_filter_setup.getFilterList();
+                                    this.createWorkspace({
+                                        raw_data_available: raw_data_available
+                                    });
 
-                            this.workspace_container.createWorkspace({
-                                title: workspace_name,
-                                data: this.graph_data,
-                                data_schema: this.data_schema,
-                                filter_config: {
-                                    nodes: node_filters,
-                                    edges: edge_filters
+                                    Ext.MessageBox.hide();
                                 }
                             });
                         }
@@ -206,5 +205,41 @@ org.systemsbiology.hukilau.components.GraphDatabaseSelect = Ext.extend(Ext.Panel
         });
 
         org.systemsbiology.hukilau.components.GraphDatabaseSelect.superclass.initComponent.call(this);
+    },
+
+    createWorkspace: function(config) {
+        var workspace_name,
+            node_filters,
+            edge_filters;
+
+        workspace_name = this.workspaceNameField.getValue();
+
+        if (this.node_filter_setup.validateFilters() == false) {
+            Ext.MessageBox.alert('Error', 'Invalid values in node filter fields.');
+            this.settings_tab_panel.setActiveTab(this.node_filter_setup.getPanel());
+            return;
+        }
+
+        if (this.edge_filter_setup.validateFilters() == false) {
+            Ext.MessageBox.alert('Error', 'Invalid values in edge filter fields.');
+            this.settings_tab_panel.add(this.edge_filter_setup.getPanel());
+            return;
+        }
+
+        node_filters = this.node_filter_setup.getFilterList();
+        edge_filters = this.edge_filter_setup.getFilterList();
+
+        var workspace_options = {
+            title: workspace_name,
+            data: this.graph_data,
+            data_schema: this.data_schema,
+            raw_data_available: config.raw_data_available,
+            filter_config: {
+                nodes: node_filters,
+                edges: edge_filters
+            }
+        };
+
+        this.workspace_container.createWorkspace(workspace_options);
     }
 });

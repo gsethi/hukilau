@@ -4,7 +4,9 @@ org.systemsbiology.hukilau.components.Workspace = Ext.extend(Ext.TabPanel,{
     constructor: function(config) {
         Ext.apply(this, config, {
             query_counter: 1,
-            cytoscape_root_id: 'c_vis'
+            cytoscape_root_id: 'c_vis',
+            plot_root_id: 'c_plot',
+            plot_data: undefined
         });
 
         this.graph_display = new org.systemsbiology.hukilau.components.GraphDisplay({
@@ -24,23 +26,37 @@ org.systemsbiology.hukilau.components.Workspace = Ext.extend(Ext.TabPanel,{
             data_schema: this.data_schema
         });
 
+        var workspace_items = [
+            new Ext.Panel({
+                title: 'Settings',
+                html: '<div class="query_error">Filter settings shown here.</div>'
+            }),
+            this.graph_display.getPanel()
+        ];
+
+        if (this.raw_data_available) {
+            var plot_display = new org.systemsbiology.hukilau.components.PlotDisplay({
+                plot_root_id: this.plot_root_id,
+                workspace: this
+            });
+
+            this.graph_display.on("nodeClicked", plot_display.updateData, plot_display);
+
+            workspace_items.push(plot_display);
+        }
+
+        workspace_items.push(new Ext.Panel({
+            title: 'Queries',
+            layout: 'column',
+            items: [
+                simple_query
+            ]
+        }));
+
         Ext.apply(this, {
             closable: true,
             activeItem: 0,
-            items: [
-                new Ext.Panel({
-                    title: 'Settings',
-                    html: '<div class="query_error">Filter settings shown here.</div>'
-                }),
-                this.graph_display.getPanel(),
-                new Ext.Panel({
-                    title: 'Queries',
-                    layout: 'column',
-                    items: [
-                        simple_query
-                    ]
-                })
-            ],
+            items: workspace_items,
             listeners: {
                 beforeclose: {
                     scope: this,

@@ -1,6 +1,6 @@
 Ext.ns('org.systemsbiology.hukilau.components');
 
-org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
+org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Ext.util.Observable, {
     cy: undefined,
     cytoscape_content_el: undefined,
     container_title: undefined,
@@ -114,6 +114,10 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
                 }
             ]
         });
+
+        this.addEvents({
+            nodeClicked: true
+        });
     },
 
     getPanel: function() {
@@ -151,6 +155,7 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
     },
 
     addElements: function(params) {
+        var that = this;
         var elements = [];
         var new_nodes = [];
 
@@ -201,6 +206,11 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
         else {
             this.cy.add(elements);
         }
+
+        this.cy.nodes().click(function() {
+            var node = this;
+            that.nodeClickHandler(node);
+        });
     },
 
     setLayout: function(name) {
@@ -249,5 +259,11 @@ org.systemsbiology.hukilau.components.GraphDisplay = Ext.extend(Object, {
                 y: base.y + dist * (Math.sin(rad) + Math.cos(rad))
             };
         };
+    },
+
+    nodeClickHandler: function(node) {
+        this.fireEvent("nodeClicked", {
+            node: node
+        });
     }
 });
