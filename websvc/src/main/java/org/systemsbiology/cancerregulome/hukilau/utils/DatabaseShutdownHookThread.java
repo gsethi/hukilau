@@ -1,7 +1,6 @@
 package org.systemsbiology.cancerregulome.hukilau.utils;
 
-import org.neo4j.kernel.AbstractGraphDatabase;
-import org.neo4j.server.database.Database;
+import org.neo4j.graphdb.GraphDatabaseService;
 
 import java.util.logging.Logger;
 
@@ -11,9 +10,9 @@ import java.util.logging.Logger;
 public class DatabaseShutdownHookThread extends Thread {
     private static final Logger log = Logger.getLogger(DatabaseShutdownHookThread.class.getName());
 
-    private final AbstractGraphDatabase database;
+    private final GraphDatabaseService database;
 
-    public DatabaseShutdownHookThread(AbstractGraphDatabase graphDb) {
+    public DatabaseShutdownHookThread(GraphDatabaseService graphDb) {
         this.database = graphDb;
 
     }

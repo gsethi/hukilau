@@ -8,10 +8,6 @@ import org.neo4j.graphdb.index.RelationshipIndex;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
 import org.neo4j.graphdb.index.IndexManager;
-import org.neo4j.kernel.AbstractGraphDatabase;
-import org.neo4j.server.rest.domain.RelationshipDirection;
-import org.neo4j.server.rest.web.DatabaseActions;
-import org.springframework.aop.ThrowsAdvice;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -56,7 +52,7 @@ import static org.systemsbiology.cancerregulome.hukilau.views.JsonNetworkView.NO
 public class QueryController implements InitializingBean {
     private static final Logger log = Logger.getLogger(QueryController.class.getName());
     private ExecutorService executorService;
-    private final Map<String, AbstractGraphDatabase> graphDbsById = new HashMap<String, AbstractGraphDatabase>();
+    private final Map<String, GraphDatabaseService> graphDbsById = new HashMap<String, GraphDatabaseService>();
     private final Map<String, String> labelsById = new HashMap<String, String>();
     private final Map<String, String> nodeIdxById = new HashMap<String, String>();
     private final Map<String, String> relIdxById = new HashMap<String, String>();
@@ -137,7 +133,7 @@ public class QueryController implements InitializingBean {
     protected ModelAndView handleNodeInsert(HttpServletRequest request, @PathVariable("graphDbId") String graphDbId,@PathVariable("nodeName") String nodeName) throws Exception {
 
 
-        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
         Index<Relationship> relIdx = indexMgr.forRelationships(relIdxById.get(graphDbId));
@@ -167,7 +163,7 @@ public class QueryController implements InitializingBean {
 
 
 
-        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
         RelationshipIndex relIdx= indexMgr.forRelationships(relIdxById.get(graphDbId));
@@ -175,16 +171,16 @@ public class QueryController implements InitializingBean {
         Node searchNode = nodeIdx.get("name",nodeName).getSingle();
 
           boolean alias = new Boolean(request.getParameter("alias")).booleanValue();
-         String relType="ngd";
+         String relType="gene_nmd";
         if(alias){
-            relType="ngd_alias";
+            relType="gene_alias_nmd";
         }
 
           try {
 
               BufferedOutputStream out = new BufferedOutputStream(response.getOutputStream());
 
-              String csvLine = "gene,singlecount,ngd,combocount\n";
+              String csvLine = "gene,singlecount,nmd,combocount\n";
               out.write(csvLine.getBytes());
 
               csvLine = nodeName + "," + searchNode.getProperty("termcount", 0) + ",0," + searchNode.getProperty("termcount", 0) + "\n";
@@ -196,7 +192,7 @@ public class QueryController implements InitializingBean {
               for (Relationship rel : ngdHits) {
                   JSONObject relJson = new JSONObject();
                   Node gene = rel.getEndNode();
-                  csvLine = gene.getProperty("name") + "," + gene.getProperty("termcount", 0) + "," + rel.getProperty("ngd") + "," + rel.getProperty("combocount") + "\n";
+                  csvLine = gene.getProperty("name") + "," + gene.getProperty("termcount", 0) + "," + rel.getProperty("nmd") + "," + rel.getProperty("combocount") + "\n";
                   out.write(csvLine.getBytes());
               }
 
@@ -245,7 +241,7 @@ public class QueryController implements InitializingBean {
         // TODO : Lookup node by name or by ID?
         int traversalLevel = getIntParameter(request, "level", 1);
 
-        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
         Node searchNode = nodeIdx.get("name", nodeId).getSingle();
@@ -268,7 +264,7 @@ public class QueryController implements InitializingBean {
 
         JSONObject nodeFilterJSONArray = new JSONObject(filter);
         NodeMaps nodeMaps = new NodeMaps();
-        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
         IndexHits<Node> nodeHits = nodeIdx.get(nodeFilterJSONArray.getString("prop"),nodeFilterJSONArray.getString("value"));
@@ -299,7 +295,7 @@ public class QueryController implements InitializingBean {
 
         JSONObject nodeSetJSON = new JSONObject(nodeSet);
 
-        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
 
@@ -348,7 +344,7 @@ public class QueryController implements InitializingBean {
             }
         }
 
-        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
 
@@ -401,7 +397,7 @@ public class QueryController implements InitializingBean {
             }
         }
 
-        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
         RelationshipIndex relIdx = indexMgr.forRelationships(relIdxById.get(graphDbId));
@@ -434,11 +430,11 @@ public class QueryController implements InitializingBean {
 
     }
 
-    private AbstractGraphDatabase getGraphDb(String graphDbId) throws ResourceNotFoundException {
+    private GraphDatabaseService getGraphDb(String graphDbId) throws ResourceNotFoundException {
         if (!this.graphDbsById.containsKey(graphDbId)) {
             throw new ResourceNotFoundException(graphDbId);
         }
-        AbstractGraphDatabase graphDb = graphDbsById.get(graphDbId);
+        GraphDatabaseService graphDb = graphDbsById.get(graphDbId);
         if (graphDb == null) {
             throw new ResourceNotFoundException(graphDbId);
         }
@@ -459,7 +455,7 @@ public class QueryController implements InitializingBean {
             throw new InvalidSyntaxException(e.getMessage());
         }
         
-        AbstractGraphDatabase graphDB = getGraphDb(graphDbId);
+        GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
         Index<Node> nodeIdx = indexMgr.forNodes(nodeIdxById.get(graphDbId));
 

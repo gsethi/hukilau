@@ -81,14 +81,14 @@
 
         <dependency>
             <groupId>org.neo4j</groupId>
-            <artifactId>neo4j-enterprise</artifactId>
-            <version>1.8.M03</version>
+            <artifactId>neo4j-community</artifactId>
+            <version>1.8.2</version>
         </dependency>
 
         <dependency>
             <groupId>org.neo4j.app</groupId>
             <artifactId>neo4j-server</artifactId>
-            <version>1.8.M03</version>
+            <version>1.8.2</version>
         </dependency>
 
 
