@@ -3,14 +3,11 @@ package org.systemsbiology.cancerregulome.hukilau.utils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.neo4j.graphdb.index.BatchInserterIndex;
-import org.neo4j.graphdb.index.BatchInserterIndexProvider;
-import org.neo4j.index.impl.lucene.LuceneBatchInserterIndexProvider;
-import org.neo4j.kernel.impl.batchinsert.BatchInserter;
-import org.neo4j.kernel.impl.batchinsert.BatchInserterImpl;
+import org.neo4j.unsafe.batchinsert.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -37,7 +34,15 @@ public class DBImport {
     public static void main(String[] args) throws Exception {
         networkConfiguration = new NetworkConfiguration(loadConfiguration());
 
-        batchInserter = new BatchInserterImpl(networkConfiguration.getDatabaseRootPath());
+        //should put this in the graphDB.config file
+        Map<String, String> config = new HashMap<String, String>();
+        config.put("neostore.nodestore.db.mapped_memory","1M");
+        config.put("neostore.relationshipstore.db.mapped_memory","2G");
+        config.put("neostore.propertystore.db.mapped_memory","1M");
+        config.put("neostore.propertystore.db.strings.mapped_memory","50M");
+        config.put("neostore.propertystore.db.arrays.mapped_memory","0M");
+
+        batchInserter = BatchInserters.inserter(networkConfiguration.getDatabaseRootPath(),config);
         BatchInserterIndexProvider indexProvider = new LuceneBatchInserterIndexProvider(batchInserter);
         relationshipIndex = indexProvider.relationshipIndex("genRelIdx", stringMap("type", "exact"));
         nodeIndex = indexProvider.nodeIndex("genNodeIdx", stringMap("type", "exact"));
@@ -102,7 +107,9 @@ public class DBImport {
                 Map<String, Object> nProperties = map("name", vertexInfo[0], "nodeType", nodeType);
                 Map<String, Object> iProperties = map("name", vertexInfo[0], "nodeType", nodeType);
                 for (int i = 1; i < vertexInfo.length; i++) {
+                    if(vertexInfo[i].trim().toLowerCase().equalsIgnoreCase("na")){
                     addProperty(columns[i], propTypes, vertexInfo[i], nProperties, iProperties);
+                    }
                 }
                 long node = batchInserter.createNode(nProperties);
                 nodeIndex.add(node, iProperties);
@@ -150,7 +157,9 @@ public class DBImport {
                     Map<String, Object> rProperties = map("relType", edgeType);
                     Map<String, Object> iProperties = map("relType", edgeType);
                     for (int i = 2; i < relInfo.length; i++) {
-                        addProperty(columns[i], propTypes, relInfo[i].trim(), rProperties, iProperties);
+                        if(!relInfo[i].trim().toLowerCase().equalsIgnoreCase("na")){
+                            addProperty(columns[i], propTypes, relInfo[i].trim(), rProperties, iProperties);
+                        }
                     }
                     long rel = batchInserter.createRelationship(sourceNode, targetNode, withName(edgeType), rProperties);
                     relationshipIndex.add(rel, iProperties);

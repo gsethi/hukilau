@@ -1,6 +1,8 @@
 package org.systemsbiology.cancerregulome.hukilau.configs;
 
 import org.json.JSONObject;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.factory.*;
 import org.neo4j.kernel.AbstractGraphDatabase;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 import org.neo4j.kernel.EmbeddedReadOnlyGraphDatabase;
@@ -19,15 +21,15 @@ import static java.lang.Runtime.getRuntime;
 /**
  * @author hrovira
  */
-public class Neo4jGraphDbMappingsHandler extends MappingPropertyByIdContainer<AbstractGraphDatabase> implements MappingsHandler {
-    public Neo4jGraphDbMappingsHandler(Map<String, AbstractGraphDatabase> map) {
+public class Neo4jGraphDbMappingsHandler extends MappingPropertyByIdContainer<GraphDatabaseService> implements MappingsHandler {
+    public Neo4jGraphDbMappingsHandler(Map<String, GraphDatabaseService> map) {
         super(map, "location");
     }
 
     public void handle(Mapping mapping) throws Exception {
         if (jsonHasProperty(mapping)) {
             String location = mapping.JSON().getString("location");
-             AbstractGraphDatabase graphDb;
+            GraphDatabaseService graphDb;
 
             if(mapping.JSON().has("dbConfig")){
                 JSONObject configMapping = mapping.JSON().getJSONObject("dbConfig");
@@ -42,13 +44,16 @@ public class Neo4jGraphDbMappingsHandler extends MappingPropertyByIdContainer<Ab
                      dbConfigMap.put(key,value);
                 }
 
+
                 if(configMapping.get("org.neo4j.server.database.mode") != null && ((String)configMapping.get("org.neo4j.server.database.mode")).equalsIgnoreCase("HA"))
-                    graphDb = new EmbeddedGraphDatabase(location,dbConfigMap);
+                    graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(location).setConfig(dbConfigMap).newGraphDatabase();
                 else
-                    graphDb = new EmbeddedGraphDatabase(location,dbConfigMap);
+                    graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(location).setConfig(dbConfigMap).newGraphDatabase();
+
+
             }
             else
-                graphDb = new EmbeddedGraphDatabase(location);
+                graphDb =  new GraphDatabaseFactory().newEmbeddedDatabase(location);
 
             getRuntime().addShutdownHook(new DatabaseShutdownHookThread(graphDb));
             addValue(mapping, graphDb);
