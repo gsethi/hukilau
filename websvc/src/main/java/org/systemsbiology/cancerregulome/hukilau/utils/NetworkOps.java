@@ -259,7 +259,7 @@ public class NetworkOps {
                                    relIdx.add(r,"combocount",ValueContext.numeric(Integer.parseInt(vertexInfo[4])));
 
                                    Relationship r2 = gene2.createRelationshipTo(searchNode, DynamicRelationshipType.withName("denovo_nmd"));
-                                   r2.setProperty("nmmd", Double.parseDouble(vertexInfo[5]));
+                                   r2.setProperty("nmd", Double.parseDouble(vertexInfo[5]));
                                    r2.setProperty("combocount", Integer.parseInt(vertexInfo[4]));
                                    relIdx.add(r2,"relType","denovo_nmd");
                                    relIdx.add(r2,"nmd",ValueContext.numeric(Double.parseDouble(vertexInfo[5])));
