@@ -261,8 +261,9 @@ public class QueryController implements InitializingBean {
         if (isEmpty(filter)) {
             throw new InvalidSyntaxException("missing 'filter' object");
         }
+        JSONArray nodeSetJson = new JSONArray(filter);
 
-        JSONObject nodeFilterJSONArray = new JSONObject(filter);
+        JSONObject nodeFilterJSONArray = (JSONObject)nodeSetJson.get(0);
         NodeMaps nodeMaps = new NodeMaps();
         GraphDatabaseService graphDB = getGraphDb(graphDbId);
         IndexManager indexMgr = graphDB.index();
