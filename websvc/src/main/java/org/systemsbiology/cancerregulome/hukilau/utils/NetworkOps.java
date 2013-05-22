@@ -159,7 +159,7 @@ public class NetworkOps {
     public static boolean insertGraphNodeData(String nodeName,boolean alias,GraphDatabaseService graphDB,Index<Node> nodeIdx, Index<Relationship> relIdx) {
 
            try {
-               BufferedReader vertexFile = new BufferedReader(new FileReader("/local/neo4j-deNovo/"+nodeName+".out"));
+               BufferedReader vertexFile = new BufferedReader(new FileReader("/titan/cancerregulome9/workspaces/pubcrawl/"+nodeName+".out"));
                String vertexLine;
                log.info("Now loading values with alias=" + alias);
                boolean first = true;
