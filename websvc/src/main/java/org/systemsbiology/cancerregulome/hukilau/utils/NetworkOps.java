@@ -226,6 +226,7 @@ public class NetworkOps {
                                    Relationship r = searchNode.createRelationshipTo(gene2, DynamicRelationshipType.withName("denovo_alias_nmd"));
                                    r.setProperty("nmd", Double.parseDouble(vertexInfo[7]));
                                    r.setProperty("combocount", Integer.parseInt(vertexInfo[6]));
+                                   r.setProperty("relType","denovo_alias_nmd");
                                    relIdx.add(r,"relType","denovo_alias_nmd");
                                    relIdx.add(r,"nmd",ValueContext.numeric(Double.parseDouble(vertexInfo[7])));
                                    relIdx.add(r,"combocount",ValueContext.numeric(Integer.parseInt(vertexInfo[6])));
@@ -233,6 +234,7 @@ public class NetworkOps {
                                    Relationship r2 = gene2.createRelationshipTo(searchNode, DynamicRelationshipType.withName("denovo_alias_nmd"));
                                    r2.setProperty("md", Double.parseDouble(vertexInfo[7]));
                                    r2.setProperty("combocount", Integer.parseInt(vertexInfo[6]));
+                                   r2.setProperty("relType","denovo_alias_nmd");
                                    relIdx.add(r2,"relType","denovo_alias_nmd");
                                    relIdx.add(r2,"nmd",ValueContext.numeric(Double.parseDouble(vertexInfo[7])));
                                    relIdx.add(r2,"combocount",ValueContext.numeric(Integer.parseInt(vertexInfo[6])));
@@ -254,13 +256,16 @@ public class NetworkOps {
                                    Relationship r = searchNode.createRelationshipTo(gene2, DynamicRelationshipType.withName("denovo_nmd"));
                                    r.setProperty("nmd", Double.parseDouble(vertexInfo[5]));
                                    r.setProperty("combocount", Integer.parseInt(vertexInfo[4]));
+                                   r.setProperty("relType","denovo_nmd");
                                    relIdx.add(r,"relType","denovo_nmd");
+
                                    relIdx.add(r,"nmd",ValueContext.numeric(Double.parseDouble(vertexInfo[5])));
                                    relIdx.add(r,"combocount",ValueContext.numeric(Integer.parseInt(vertexInfo[4])));
 
                                    Relationship r2 = gene2.createRelationshipTo(searchNode, DynamicRelationshipType.withName("denovo_nmd"));
                                    r2.setProperty("nmd", Double.parseDouble(vertexInfo[5]));
                                    r2.setProperty("combocount", Integer.parseInt(vertexInfo[4]));
+                                   r2.setProperty("relType","denovo_nmd");
                                    relIdx.add(r2,"relType","denovo_nmd");
                                    relIdx.add(r2,"nmd",ValueContext.numeric(Double.parseDouble(vertexInfo[5])));
                                    relIdx.add(r2,"combocount",ValueContext.numeric(Integer.parseInt(vertexInfo[4])));
