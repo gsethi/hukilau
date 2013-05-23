@@ -107,9 +107,9 @@ public class DBImport {
                 Map<String, Object> nProperties = map("name", vertexInfo[0], "nodeType", nodeType);
                 Map<String, Object> iProperties = map("name", vertexInfo[0], "nodeType", nodeType);
                 for (int i = 1; i < vertexInfo.length; i++) {
-                    if(vertexInfo[i].trim().toLowerCase().equalsIgnoreCase("na")){
+
                     addProperty(columns[i], propTypes, vertexInfo[i], nProperties, iProperties);
-                    }
+
                 }
                 long node = batchInserter.createNode(nProperties);
                 nodeIndex.add(node, iProperties);
